@@ -115,6 +115,12 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
 .doc .ph .pdot{position:absolute;right:6px;top:6px;margin:0;width:9px;height:9px}
 .doc .key{padding:6px 12px 8px;color:var(--dim);font-size:9px;letter-spacing:.18em}
 .who{display:flex;gap:10px;align-items:center;cursor:pointer;flex:1;min-width:0}
+.face{width:28px;height:28px;object-fit:cover;object-position:50% 25%;display:block;flex:none;border:1px solid var(--dim);background:#000}
+.face.lg{width:36px;height:36px}
+.doc .names{display:flex;gap:6px 22px;flex-wrap:wrap}
+.offline{border-color:#6a1a20;background:rgba(40,4,8,.55)}
+.offline h3{color:var(--r)}
+.offline .partial{color:var(--r)}
 .who:hover .white{text-decoration:underline}
 .vis.pub{color:var(--g);border-color:#1d6a3d}
 .vis.priv{color:var(--a);border-color:#6a4a08}
@@ -213,7 +219,8 @@ const enc=new TextEncoder();const bytes=s=>enc.encode(s).length;
 const EYES=['BLACK','BLUE','BROWN','GRAY','GREEN','HAZEL','AMBER','MULTICOLOR'];
 const HAIR=['BLACK','BROWN','BLOND','RED','GRAY','WHITE','BALD','OTHER'];
 const FIELDS=[
- ['name','FULL NAME','text','Given and family name'],
+ ['first','FIRST NAME','text','Ada'],
+ ['last','LAST NAME','text','Lovelace'],
  ['preferred','GOES BY','text','What people call you'],
  ['born','DATE OF BIRTH','date'],
  ['sex','SEX','sex'],
@@ -244,10 +251,18 @@ const IMG=/^data:image\/(?:jpeg|png|webp|gif);base64,[A-Za-z0-9+/]+=*$/;
 const PAT=/~[a-z]{3}(?:[a-z]{3})?(?:-[a-z]{6})*(?:--[a-z]{6}(?:-[a-z]{6})*)?(?![a-z-])/;
 function shipIn(t){t=String(t||'').trim().toLowerCase();const m=t.match(PAT);if(m)return m[0];return /^[a-z]{3}(?:[a-z]{3})?(?:-[a-z]{6})*(?:--[a-z]{6}(?:-[a-z]{6})*)?$/.test(t)?'~'+t:null}
 function lineOf(ls,k){return ls.find(l=>l.key===k)}
-function nameOf(ls){const n=lineOf(ls,'name')||lineOf(ls,'preferred');return n?n.value:null}
+const NAMES=new Set(['first','last','preferred','name']);
+// first and last name; else what they go by; else a full name from an older ID
+function nameOf(ls){const f=lineOf(ls,'first'),l=lineOf(ls,'last'),n=[f&&f.value,l&&l.value].filter(Boolean).join(' ');if(n)return n;const o=lineOf(ls,'preferred')||lineOf(ls,'name');return o?o.value:null}
 
 const S={our:null,mine:{lines:[],allowed:[],inbox:[],blocked:[]},book:{},ready:false,error:null};
-const UI={tab:'me',open:null,preview:'owner',dirty:false,pending:null,look:'',confirm:null,qr:null};
+const UI={tab:'me',open:null,preview:'owner',dirty:false,pending:null,look:'',confirm:null,qr:null,waitMs:8000};
+// IDs fetched from other ships are held here, in this page, and nowhere else:
+// your ship keeps only the list of ships you have looked up.
+//   Seen[ship] = {row, full}: each {data, busy, off, noapp, since}
+//     data = {lines, hidden, ask, pic: {hash, pub} | null, at}
+//   Img[hash] = {full, thumb}
+const Seen={},Img={};
 let D=null;// the ID as being edited
 
 /* ---------- channel ---------- */
@@ -263,7 +278,7 @@ async function getStamp(){try{const r=await fetch('/~/scry/id/stamp.json',{crede
 async function liveCheck(){if(!S.ready||document.hidden||!Chan.es||Live.have==null)return;const st=await getStamp();if(st==null||st===Live.have)return;
  await new Promise(r=>setTimeout(r,2500));if(Live.have==null)return;const st2=await getStamp();if(st2!=null&&st2!==Live.have)connect()}
 setInterval(liveCheck,15000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden||!S.ready)return;liveCheck();if(UI.open)act({look:{who:UI.open}})});
+document.addEventListener('visibilitychange',()=>{if(document.hidden||!S.ready)return;liveCheck();if(UI.open)fetchId(UI.open,'full')});
 async function connect(){Live.have=null;if(Chan.es)Chan.es.close();for(const f of Chan.wait.values())f('reconnected');Chan.wait.clear();Chan.url='/~/channel/id-'+Date.now().toString(36)+'-'+rid(5);Chan.id=0;Chan.q=[];Chan.busy=false;Chan.ack=-1;Chan.acked=-1;const u=Chan.url;
  try{if(!Chan.ship){const h=await fetch('/~/host',{credentials:'include'});if(!h.ok)throw Error('host '+h.status);Chan.ship=(await h.text()).trim().replace(/^~/,'')}Chan.sub=++Chan.id;const r=await put(u,[{id:Chan.sub,action:'subscribe',ship:Chan.ship,app:'id',path:'/ui'}]);if(!r.ok)throw Error('channel '+r.status)}
  catch(e){if(u===Chan.url){S.error='Cannot reach your ship: '+e.message;draw();setTimeout(connect,1000*Math.min(6,++Chan.retry))}return}
@@ -279,33 +294,79 @@ const same=(a,b)=>JSON.stringify(a.map(l=>[l.key,l.label,l.value,l.pub]))===JSON
 function fact(d){
  if(typeof d.stamp==='string'){Live.have=d.stamp;return}
  const before=S.mine.inbox.length;
- if(d.init){S.our=d.init.our;S.mine=d.init.mine;S.book={};for(const e of d.init.book||[])S.book[e.who]=e;S.ready=true;if(!UI.dirty)D=fromLines(S.mine.lines)}
- if(d.mine){S.mine=d.mine;if(UI.pending&&same(UI.pending,S.mine.lines)){UI.pending=null;UI.dirty=false}if(!UI.dirty)D=fromLines(S.mine.lines)}
- if(d.entry)S.book[d.entry.who]=d.entry;
- if(d.gone){delete S.book[d.gone];if(UI.open===d.gone)UI.open=null}
+ if(d.init){S.our=d.init.our;S.mine=d.init.mine;S.book={};for(const e of d.init.book||[]){S.book[e.who]=e;stale(e)}S.ready=true;if(!UI.dirty)redraft();if(UI.open)fetchId(UI.open,'full')}
+ if(d.mine){S.mine=d.mine;if(UI.pending&&same(UI.pending,S.mine.lines)){UI.pending=null;UI.dirty=false}if(!UI.dirty)redraft()}
+ if(d.entry){S.book[d.entry.who]=d.entry;stale(d.entry)}
+ if(d.gone){delete S.book[d.gone];delete Seen[d.gone];if(UI.open===d.gone)UI.open=null}
+ if(d.got)took(d.got);
+ if(d.pic){const p=d.pic,x=Img[p.hash]||(Img[p.hash]={});if(p.full)x.full=p.full;if(p.thumb)x.thumb=p.thumb}
+ if(d.noapp){const s=slot(d.noapp.who,d.noapp.mode);s.busy=false;s.noapp=true}
+ if(d.nudge){(Seen[d.nudge]||(Seen[d.nudge]={})).announce=true;fetchId(d.nudge,'full')}
+ if(d.acked)fetchId(d.acked,'full');
  if(d.note)note(d.note);
  if(d.init&&UI.pendingOpen){const w=UI.pendingOpen;UI.pendingOpen=null;openId(w);return}
  if(!d.init&&S.mine.inbox.length>before){const w=S.mine.inbox.slice().sort((a,b)=>b.when-a.when)[0];if(w)note(w.who+' asks to see your ID.')}
  draw();
 }
 
+/* ---------- fetching other IDs ---------- */
+// a ship told us since we last fetched it (maybe while this page wasn't
+// listening): what we hold is out of date
+function stale(e){const sn=Seen[e.who];if(!sn||!e.told)return;for(const m of['row','full']){const x=sn[m];if(x&&x.data&&e.told>x.data.at)x.data.at=0}}
+function slot(who,mode){const s=Seen[who]||(Seen[who]={});return s[mode]||(s[mode]={})}
+// ask a ship for its ID. No answer within a few seconds: offline or unavailable
+// (the answer still counts if it comes later). 'have' names a photo this page
+// already holds, so it isn't sent again.
+function fetchId(who,mode){if(!S.ready||!who||who===S.our)return;const s=slot(who,mode),f=Seen[who].full,h=f&&f.data&&f.data.pic&&f.data.pic.hash;
+ const have=mode==='full'&&h&&Img[h]&&Img[h].full?h:'0v0';
+ s.busy=true;s.since=Date.now();const since=s.since;clearTimeout(s.timer);
+ s.timer=setTimeout(()=>{if(s.since===since&&s.busy){s.busy=false;s.off=true;draw()}},UI.waitMs);
+ act({fetch:{who,mode,have}})}
+function took(g){const s=slot(g.who,g.mode);s.data={lines:g.lines,hidden:g.hidden,ask:g.ask,pic:g.pic,at:Date.now()};s.busy=false;s.off=false;s.noapp=false;
+ // a full answer is also the freshest row
+ if(g.mode==='full'){const r=slot(g.who,'row');r.data={...s.data,lines:g.lines.filter(l=>NAMES.has(l.key))};r.off=false;r.noapp=false}
+ const sn=Seen[g.who];if(sn.announce&&g.mode==='full'){sn.announce=false;const v=s.data;if(v.ask==='no')note(g.who+' denied your request.');else if(!v.hidden&&v.lines.some(l=>l.pub===false))note(g.who+' accepted your request: you see their whole ID.')}}
+function dataOf(who,mode){const sn=Seen[who];if(!sn)return null;const a=sn[mode]&&sn[mode].data;if(a||mode==='full')return a||null;return sn.full&&sn.full.data||null}
+function face(who,cls){const d=dataOf(who,'row'),h=d&&d.pic&&d.pic.hash,im=h&&Img[h],src=im&&(im.thumb||im.full);
+ if(src&&IMG.test(src)){const i=el('img','face '+(cls||''));i.alt='';i.src=src;return i}return sig(who,cls)}
+// lists fetch the names and thumbnail of each ship as its row comes into view
+let RowObs=null;
+function rowWanted(who){if(!who||who===S.our)return;const sn=Seen[who]||{},r=sn.row||{},f=sn.full||{};if(r.busy||f.busy)return;
+ const at=Math.max((r.data&&r.data.at)||0,(f.data&&f.data.at)||0);if(Date.now()-at<300000)return;if((r.off||r.noapp)&&Date.now()-(r.since||0)<60000)return;fetchId(who,'row')}
+function observeRows(){if(RowObs)RowObs.disconnect();const rows=document.querySelectorAll('[data-row]');
+ if(!('IntersectionObserver' in window)){for(const r of rows)rowWanted(r.dataset.row);return}
+ RowObs=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting)rowWanted(e.target.dataset.row)},{rootMargin:'200px'});for(const r of rows)RowObs.observe(r)}
+// an open ID checks for changes every 30 s
+setInterval(()=>{if(S.ready&&UI.open&&!document.hidden&&!(Seen[UI.open]&&Seen[UI.open].full&&Seen[UI.open].full.busy))fetchId(UI.open,'full')},30000);
+
 /* ---------- drafts ---------- */
-function fromLines(ls){const by={};for(const l of ls)by[l.key]=l;return{photo:by.photo?{value:by.photo.value,pub:by.photo.pub}:{value:'',pub:false},std:FIELDS.map(([k,lab])=>({key:k,label:lab,value:by[k]?by[k].value:'',pub:by[k]?by[k].pub:false})),custom:ls.filter(l=>l.key!=='photo'&&!STD.has(l.key)).map(l=>({...l}))}}
+function fromLines(ls){const by={};for(const l of ls)by[l.key]=l;let split=false;
+ // an older ID has one full name: split it, last word last, for checking
+ if(by.name&&!by.first&&!by.last){const w=by.name.value.trim().split(/\s+/),last=w.length>1?w.pop():'';by.first={key:'first',value:w.join(' '),pub:by.name.pub};if(last)by.last={key:'last',value:last,pub:by.name.pub};split=true}
+ return{split,photo:by.photo?{value:by.photo.value,pub:by.photo.pub,thumb:by.thumb?by.thumb.value:''}:{value:'',pub:false,thumb:''},std:FIELDS.map(([k,lab])=>({key:k,label:lab,value:by[k]?by[k].value:'',pub:by[k]?by[k].pub:false})),custom:ls.filter(l=>!['photo','thumb','name'].includes(l.key)&&!STD.has(l.key)).map(l=>({...l}))}}
+function redraft(){D=fromLines(S.mine.lines);if(D.split){UI.dirty=true;note('Your full name is now a first and a last name. Check them, then save.')}
+ // a photo saved before thumbnails: make one and save it quietly
+ if(D.photo.value&&!D.photo.thumb&&!UI.dirty&&!UI.thumbing){UI.thumbing=true;thumbOf(D.photo.value).then(t=>{UI.thumbing=false;if(!t||UI.dirty||!D.photo.value||D.photo.thumb)return;D.photo.thumb=t;const ls=toLines(D);UI.pending=ls;act({save:{lines:ls}})})}}
 function toLines(d){const out=[];for(const l of d.std){const v=l.value.trim();if(v)out.push({key:l.key,label:l.label,value:v,pub:l.pub})}
  for(const l of d.custom){const v=l.value.trim();if(v)out.push({key:l.key,label:(l.label.trim()||'OTHER').toUpperCase(),value:v,pub:l.pub})}
- if(d.photo.value)out.push({key:'photo',label:'PHOTO',value:d.photo.value,pub:d.photo.pub});return out}
-function problem(ls){if(ls.length>LIM.lines)return'An ID holds at most '+LIM.lines+' lines.';for(const l of ls){if(bytes(l.label)>LIM.label)return'The label "'+l.label.slice(0,20)+'…" is too long.';if(l.key!=='photo'&&bytes(l.value)>LIM.value)return l.label+' is too long (at most '+LIM.value+' characters).';if(l.key==='photo'&&l.value.length>LIM.photo)return'That photo is too big.'}return null}
+ if(d.photo.value){out.push({key:'photo',label:'PHOTO',value:d.photo.value,pub:d.photo.pub});if(d.photo.thumb)out.push({key:'thumb',label:'THUMBNAIL',value:d.photo.thumb,pub:d.photo.pub})}return out}
+const shown=ls=>ls.filter(l=>l.key!=='thumb');
+function problem(ls){if(shown(ls).length>LIM.lines)return'An ID holds at most '+LIM.lines+' lines.';for(const l of ls){if(bytes(l.label)>LIM.label)return'The label "'+l.label.slice(0,20)+'…" is too long.';if(l.key!=='photo'&&l.key!=='thumb'&&bytes(l.value)>LIM.value)return l.label+' is too long (at most '+LIM.value+' characters).';if(l.key==='photo'&&l.value.length>LIM.photo)return'That photo is too big.'}return null}
 function edited(){UI.dirty=true;drawPreview();drawSaveBar()}
 function newKey(){const used=new Set(D.custom.map(l=>l.key));let i=1;while(used.has('x'+i))i++;return'x'+i}
 async function save(){const bad=D.std.filter(o=>o.bad);if(bad.length){for(const o of bad)o.showBad=true;drawEditor();note(bad[0].label+': '+bad[0].bad);return}
  const ls=toLines(D);const p=problem(ls);if(p){note(p);return}UI.pending=ls;drawSaveBar();if(!await act({save:{lines:ls}})){UI.pending=null;drawSaveBar();return}
  setTimeout(()=>{if(UI.pending===ls){UI.pending=null;drawSaveBar()}},2500)}
-function discard(){UI.dirty=false;UI.pending=null;D=fromLines(S.mine.lines);draw()}
+function discard(){UI.dirty=false;UI.pending=null;D=fromLines(S.mine.lines);D.split=false;draw()}
 function setPhoto(file){if(!file)return;const url=URL.createObjectURL(file);const im=new Image();
  im.onload=()=>{const W=480,H=600,r=W/H;let sw=im.naturalWidth,sh=im.naturalHeight,sx=0,sy=0;if(sw/sh>r){sw=sh*r;sx=(im.naturalWidth-sw)/2}else{sh=sw/r;sy=(im.naturalHeight-sh)*.3}
   const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(im,sx,sy,sw,sh,0,0,W,H);
-  let q=.85,d=c.toDataURL('image/jpeg',q);while(d.length>300000&&q>.35){q-=.1;d=c.toDataURL('image/jpeg',q)}URL.revokeObjectURL(url);D.photo.value=d;edited();drawEditor()};
+  let q=.85,d=c.toDataURL('image/jpeg',q);while(d.length>300000&&q>.35){q-=.1;d=c.toDataURL('image/jpeg',q)}URL.revokeObjectURL(url);D.photo.value=d;D.photo.thumb='';
+  thumbOf(d).then(t=>{D.photo.thumb=t||'';edited();drawEditor()})};
  im.onerror=()=>{URL.revokeObjectURL(url);note('Could not read that picture. Try a JPEG or PNG.')};im.src=url}
+
+// the thumbnail for lists: the photo at 96x120, a few KB
+function thumbOf(src){return new Promise(ok=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=96;c.height=120;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,96,120);x.drawImage(im,0,0,96,120);let q=.75,d=c.toDataURL('image/jpeg',q);while(d.length>30000&&q>.3){q-=.15;d=c.toDataURL('image/jpeg',q)}ok(d)};im.onerror=()=>ok('');im.src=src})}
 
 /* ---------- sigils, drawn by %id-sigil on our ship ---------- */
 function sigUrl(who,fg,bg){return'/apps/id/sigil/'+encodeURIComponent(who)+'?fg='+(fg||'39c8ff')+'&bg='+(bg||'000913')}
@@ -313,17 +374,18 @@ function sig(who,cls){const i=el('img','sig '+(cls||''));i.alt='';i.loading='laz
 
 /* ---------- the ID, as a document ---------- */
 // mode: owner (tags private lines), viewer (tags lines shared with us), public (a stranger's view)
-function doc(ship,ls,mode,hidden){
+function doc(ship,ls,mode,hidden){ls=shown(ls);
  const d=el('div','doc');const band=el('div','band');const bs=el('span','mono',ship);if(hidden)bs.prepend(tag('PARTIAL','part'),' ');add(band,el('span',null,'IDENTIFICATION'),bs);d.appendChild(band);
  const top=el('div','top'),ph=el('div','ph'),p=lineOf(ls,'photo');
  if(p&&IMG.test(p.value)){const i=el('img');i.alt='Photo';i.src=p.value;ph.appendChild(i);if(dotted(p,mode))ph.appendChild(dot(mode))}
  else ph.appendChild(el('span',null,mode==='owner'?'NO PHOTO':'NO PHOTO SHOWN'));
- const hd=el('div','hd'),nm=lineOf(ls,'name'),pf=lineOf(ls,'preferred');
- hd.appendChild(nm?field(nm,mode,'big'):el('div','title',ship));
+ const hd=el('div','hd'),fn=lineOf(ls,'first'),ln=lineOf(ls,'last'),nm=lineOf(ls,'name'),pf=lineOf(ls,'preferred');
+ if(fn||ln){const r=el('div','names');if(fn)r.appendChild(field(fn,mode,'big'));if(ln)r.appendChild(field(ln,mode,'big'));hd.appendChild(r)}
+ else hd.appendChild(nm?field(nm,mode,'big'):el('div','title',ship));
  if(pf)hd.appendChild(field(pf,mode));
  const sr=el('div','sigrow');add(sr,sig(ship,'lg'),el('span','dim mono small',ship));hd.appendChild(sr);
  add(top,ph,hd);d.appendChild(top);
- const rest=ls.filter(l=>l.key!=='photo'&&l.key!=='name'&&l.key!=='preferred');
+ const rest=ls.filter(l=>!['photo','first','last','name','preferred'].includes(l.key));
  if(rest.length||hidden){const g=el('div','grid');for(const l of rest)g.appendChild(field(l,mode,(l.key==='address'||l.key==='emergency'||l.value.length>34||l.value.includes('\n'))?'wide':''));
   for(let i=0;i<Math.min(hidden,8);i++){const f=el('div','f redact');add(f,el('div','lab','WITHHELD'),el('div','val'));g.appendChild(f)}d.appendChild(g)}
  if(ls.some(l=>dotted(l,mode))){const k=el('div','key'+(mode==='viewer'?' shared':''));add(k,dot(mode),mode==='owner'?'PRIVATE':'PRIVATE, SHARED WITH YOU');d.appendChild(k)}
@@ -373,7 +435,7 @@ function readCard(file){if(!file)return;const url=URL.createObjectURL(file);cons
 
 /* ---------- actions ---------- */
 function openId(who){who=shipIn(who);if(!who){note('That is not a ship name (an @p, like ~sampel-palnet).');return}
- if(who===S.our){UI.tab='me';UI.open=null;draw();scrollTo(0,0);return}if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';if(!S.book[who])S.book[who]={who,view:null,got:null,asked:null,gone:false,fresh:false};else S.book[who].fresh=false;draw();scrollTo(0,0);act({look:{who}})}
+ if(who===S.our){UI.tab='me';UI.open=null;draw();scrollTo(0,0);return}if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';if(!S.book[who])S.book[who]={who,added:Date.now(),asked:null,fresh:false};else S.book[who].fresh=false;draw();scrollTo(0,0);act({look:{who}});fetchId(who,'full')}
 function confirmOr(key,f){if(UI.confirm===key){UI.confirm=null;f();return}UI.confirm=key;draw();setTimeout(()=>{if(UI.confirm===key){UI.confirm=null;draw()}},4000)}
 
 /* ---------- drawing ---------- */
@@ -386,6 +448,7 @@ function draw(){
  if(S.error)m.appendChild(status(S.error,'bad'));
  if(!S.ready){m.appendChild(el('div','boot','CONNECTING TO YOUR SHIP…'));return}
  if(UI.tab==='me')mePanel(m);else if(UI.tab==='look')(UI.open?theirPanel(m,UI.open):lookPanel(m));else asksPanel(m);
+ if(UI.tab==='asks'||(UI.tab==='look'&&!UI.open))observeRows();
  refocus(keep)}
 // keep the caret where it was when a fact redraws the page
 function focusKey(){const a=document.activeElement;return a&&a.dataset&&a.dataset.k?{k:a.dataset.k,s:a.selectionStart,e:a.selectionEnd}:null}
@@ -407,7 +470,7 @@ function mePanel(m){
  drawPreview();drawEditor()}
 function drawPreview(){const L=$('pvcol');if(!L)return;L.textContent='';
  const s=sec('PREVIEW');const seg=el('div','seg');for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;drawPreview()},UI.preview===k?'on':'');b.title=h;b.dataset.k='pv:'+k;seg.appendChild(b)}s.querySelector('h3').appendChild(seg);
- const ls=toLines(D);const pub=ls.filter(l=>l.pub);
+ const ls=shown(toLines(D));const pub=ls.filter(l=>l.pub);
  s.appendChild(UI.preview==='owner'?doc(S.our,ls,'owner',0):doc(S.our,pub,'public',ls.length-pub.length));
  s.appendChild(tip((UI.preview==='owner'?'Your whole ID, as you and the ships you accept see it. Lines with a dot are private.':'Your public ID, as anyone who looks you up sees it.')+(UI.dirty?' Includes unsaved changes.':'')));L.appendChild(s)}
 function visBtn(o){const b=btn(o.pub?'PUBLIC':'PRIVATE',()=>{o.pub=!o.pub;b.textContent=o.pub?'PUBLIC':'PRIVATE';b.className='vis '+(o.pub?'pub':'priv');edited()},'vis '+(o.pub?'pub':'priv'));b.title='Click to switch';return b}
@@ -458,7 +521,7 @@ function widget(o,kind,x){let inner;
  return wrapField(o,inner)}
 function drawEditor(){const R=$('edcol');if(!R)return;const keep=focusKey();R.textContent='';
  const ps=sec('PHOTO');const pe=el('div','phed'),box=el('div','ph');if(D.photo.value&&IMG.test(D.photo.value)){const i=el('img');i.alt='';i.src=D.photo.value;box.appendChild(i)}else box.textContent='NONE';
- const pc=el('div');const r1=el('div','row');add(r1,btn(D.photo.value?'REPLACE':'UPLOAD',()=>$('photoin').click()),D.photo.value&&btn('REMOVE',()=>{D.photo.value='';edited();drawEditor()},'red'),D.photo.value&&visBtn(D.photo));pc.appendChild(r1);pc.appendChild(tip('One photo of yourself. It is cropped to a portrait and kept small.'));add(pe,box,pc);ps.appendChild(pe);R.appendChild(ps);
+ const pc=el('div');const r1=el('div','row');add(r1,btn(D.photo.value?'REPLACE':'UPLOAD',()=>$('photoin').click()),D.photo.value&&btn('REMOVE',()=>{D.photo.value='';D.photo.thumb='';edited();drawEditor()},'red'),D.photo.value&&visBtn(D.photo));pc.appendChild(r1);pc.appendChild(tip('One photo of yourself. It is cropped to a portrait and kept small.'));add(pe,box,pc);ps.appendChild(pe);R.appendChild(ps);
  const ls=sec('YOUR LINES',btn('ALL PRIVATE',()=>{for(const l of[...D.std,...D.custom])l.pub=false;D.photo.pub=false;edited();drawEditor()},'x'),btn('ALL PUBLIC',()=>{for(const l of[...D.std,...D.custom])l.pub=true;D.photo.pub=true;edited();drawEditor()},'x'));
  for(const[k,lab,kind,x]of FIELDS){const o=D.std.find(l=>l.key===k);const r=el('div','ed');add(r,el('div','lab',lab),widget(o,kind,x),visBtn(o),el('span'));ls.appendChild(r)}
  for(const o of D.custom){const r=el('div','ed');const lab=el('div','lab');const li=el('input');li.type='text';li.value=o.label;li.placeholder='LABEL';li.maxLength=LIM.label;li.dataset.k='l:'+o.key;li.oninput=()=>{o.label=li.value;edited()};lab.appendChild(li);
@@ -472,26 +535,36 @@ function drawSaveBar(){const sb=$('savebar');if(!sb)return;sb.textContent='';sb.
 $('photoin').onchange=e=>{const f=e.target.files[0];e.target.value='';setPhoto(f)};
 
 /* LOOK UP */
-function entryInfo(e){const v=e.view;if(e.gone)return[tag('NO ID APP','bad')];if(!v)return[tag('NO ANSWER YET','pub')];const out=[];const sh=v.lines.filter(l=>!l.pub).length;
- if(v.ask==='wait'||e.asked)out.push(tag('REQUESTED','priv'));else if(v.ask==='no')out.push(tag('DENIED','bad'));if(sh)out.push(tag('ACCEPTED','shared'));else if(!v.hidden)out.push(tag('ALL VISIBLE','pub'));else if(!out.length)out.push(tag('PARTIAL','part'));return out}
+function entryInfo(who){const e=S.book[who]||{},sn=Seen[who]||{},f=sn.full||{},r=sn.row||{},d=dataOf(who,'row'),out=[];
+ if(!d){if(f.noapp||r.noapp)return[tag('NO ID APP','bad')];if(f.off||r.off)return[tag('OFFLINE','bad')];return[tag('CONTACTING…','pub')]}
+ if(f.off||r.off)out.push(tag('OFFLINE','bad'));
+ if(d.ask==='wait'||e.asked)out.push(tag('REQUESTED','priv'));else if(d.ask==='no')out.push(tag('DENIED','bad'));
+ out.push(d.hidden?tag('PARTIAL','part'):tag('FULL ID','shared'));return out}
 function lookPanel(m){
  const s=sec('LOOK UP AN ID');const r=el('div','row');const i=el('input');i.type='text';i.placeholder='~sampel-palnet';i.value=UI.look;i.dataset.k='look';i.autocapitalize='off';i.autocomplete='off';i.spellcheck=false;i.oninput=()=>UI.look=i.value;i.onkeydown=e=>{if(e.key==='Enter')openId(UI.look)};i.classList.add('grow');
  add(r,i,btn('LOOK UP',()=>openId(UI.look),'go'));s.appendChild(r);
  const r2=el('div','row');add(r2,btn('◉ SCAN CARD',startScan),btn('PHOTO OF CARD',()=>$('cardin').click()));s.appendChild(r2);
  s.appendChild(tip('Type a ship name, or scan the code on someone’s ID card. You see their public lines straight away and can ask for the rest.'));m.appendChild(s);
- const es=Object.values(S.book).sort((a,b)=>(b.fresh-a.fresh)||((b.got||0)-(a.got||0)));
+ const es=Object.values(S.book).sort((a,b)=>(b.fresh-a.fresh)||((b.added||0)-(a.added||0)));
  const b=sec('IDS ON FILE',el('span','dim',String(es.length)));
  if(!es.length)b.appendChild(el('div','empty','NONE YET'));
- for(const e of es){const it=el('div','item');it.onclick=()=>openId(e.who);const nm=e.view?nameOf(e.view.lines):null;const mid=el('div');mid.style.minWidth='0';add(mid,el('div','nm',nm||e.who),el('div','sub',nm?e.who:(e.view?'NO NAME SHOWN':'')));
-  const right=el('div','chips');if(e.fresh)right.appendChild(tag('NEW','new'));for(const t of entryInfo(e))right.appendChild(t);add(it,sig(e.who,'lg'),mid,right);b.appendChild(it)}
+ for(const e of es){const it=el('div','item');it.dataset.row=e.who;it.onclick=()=>openId(e.who);const d=dataOf(e.who,'row'),nm=d?nameOf(d.lines):null;const mid=el('div');mid.style.minWidth='0';add(mid,el('div','nm',nm||e.who),el('div','sub',nm?e.who:(d?'NO NAME SHOWN':'')));
+  const right=el('div','chips');if(e.fresh)right.appendChild(tag('NEW','new'));for(const t of entryInfo(e.who))right.appendChild(t);add(it,face(e.who,'lg'),mid,right);b.appendChild(it)}
  m.appendChild(b)}
-function theirPanel(m,who){const e=S.book[who]||{who,view:null};
+function theirPanel(m,who){const e=S.book[who]||{},f=slot(who,'full'),v=f.data;
  const top=el('div','row');top.style.marginBottom='12px';add(top,btn(UI.from==='asks'?'◀ REQUESTS':'◀ BACK',()=>{UI.open=null;if(UI.from){UI.tab=UI.from;UI.from=null}draw()}),el('span','grow'),btn(UI.confirm==='forget:'+who?'SURE? FORGET':'FORGET',()=>confirmOr('forget:'+who,async()=>{await act({forget:{who}});UI.open=null;draw()}),'red'));m.appendChild(top);
  const cols=el('div','cols');const L=el('div'),R=el('div');add(cols,L,R);m.appendChild(cols);
- if(e.gone){L.appendChild(status('NO ID ON '+who+'. The ID app isn’t installed there, or it refused.','bad'));L.appendChild(btn('TRY AGAIN',()=>openId(who)));return}
- if(!e.view){L.appendChild(status('CONTACTING '+who+'…','warn'));L.appendChild(tip('Their ship may be offline, or not running ID. This page fills in as soon as it answers.'));return}
- const v=e.view;L.appendChild(doc(who,v.lines,'viewer',v.hidden));if(e.got)L.appendChild(tip('Last updated by their ship '+ago(e.got).toLowerCase()+'.'));
- const shared=v.lines.some(l=>!l.pub),waiting=v.ask==='wait'||!!e.asked;const s=sec('PRIVATE INFO');
+ const again=()=>btn(f.busy?'TRYING…':'TRY AGAIN',()=>{fetchId(who,'full');draw()});
+ if(!v){
+  if(f.noapp){const s=sec('NO ID');s.classList.add('offline');add(s,el('div','partial','NO ID ON '+who),el('div','small dim','The ID app isn’t installed on that ship.'));const r=el('div','row');r.style.marginTop='10px';r.appendChild(again());s.appendChild(r);L.appendChild(s);return}
+  if(f.off){const s=sec('NO ANSWER');s.classList.add('offline');add(s,el('div','partial','SHIP OFFLINE OR UNAVAILABLE'),el('div','small dim',who+' didn’t answer. Their ship may be offline, or not running ID right now.'));const r=el('div','row');r.style.marginTop='10px';r.appendChild(again());s.appendChild(r);s.appendChild(tip('If their ship answers later, their ID appears here.'));L.appendChild(s);return}
+  L.appendChild(status('CONTACTING '+who+'…','warn'));L.appendChild(tip('Asking their ship for their ID.'));return}
+ // the ID as fetched, with the photo (or its thumbnail while the photo comes)
+ const ls=v.lines.slice(),h=v.pic&&v.pic.hash,im=h&&Img[h];if(v.pic){const src=im&&(im.full||im.thumb);if(src)ls.unshift({key:'photo',label:'PHOTO',value:src,pub:v.pic.pub})}
+ L.appendChild(doc(who,ls,'viewer',v.hidden));
+ if(f.off){L.appendChild(status('Their ship isn’t answering right now. This is what it showed you '+ago(v.at).toLowerCase()+'.','warn'));const r=el('div','row');r.style.marginTop='6px';r.appendChild(again());L.appendChild(r)}
+ else L.appendChild(tip((f.busy?'Checking for changes… ':'Fetched from their ship '+ago(v.at).toLowerCase()+'. ')+'Not saved on your ship.'));
+ const shared=v.lines.some(l=>!l.pub)||!!(v.pic&&!v.pic.pub),waiting=v.ask==='wait'||!!e.asked;const s=sec('PRIVATE INFO');
  if(v.hidden){s.classList.add('warn');s.appendChild(el('div','partial','YOU ARE SEEING ONLY PART OF THIS ID'));s.appendChild(el('div','small amber',plural(v.hidden,'private line').toLowerCase()+' withheld.'))}
  if(waiting){s.appendChild(status('ID requested. Waiting for '+who+' to accept or deny.','warn'));s.appendChild(btn('CANCEL REQUEST',()=>act({cancel:{who}})))}
  else if(v.hidden){if(v.ask==='no')s.appendChild(status(who+' denied your request.','bad'));
@@ -505,7 +578,7 @@ $('scanx').onclick=stopScan;
 addEventListener('keydown',e=>{if(e.key==='Escape'&&Scan.on)stopScan()});
 
 /* REQUESTS */
-function who2(who,extra){const known=S.book[who]&&S.book[who].view?nameOf(S.book[who].view.lines):null;const w=el('div','who');w.title='Open '+who+'’s ID';w.onclick=()=>openId(who);const nm=el('div');nm.style.minWidth='0';add(nm,el('div','white',known||who),known&&el('div','dim small',who),extra);add(w,sig(who,'lg'),nm);return w}
+function who2(who,extra){const d=dataOf(who,'row'),known=d?nameOf(d.lines):null;const w=el('div','who');w.dataset.row=who;w.title='Open '+who+'’s ID';w.onclick=()=>openId(who);const nm=el('div');nm.style.minWidth='0';add(nm,el('div','white',known||who),known&&el('div','dim small',who),extra);add(w,face(who,'lg'),nm);return w}
 function asksPanel(m){const s=sec('REQUESTS FOR YOUR ID',el('span','dim',String(S.mine.inbox.length)));
  const reqs=S.mine.inbox.slice().sort((a,b)=>b.when-a.when);if(!reqs.length)s.appendChild(el('div','empty','NO REQUESTS'));
  for(const q of reqs){const who=q.who,box=el('div','req');const h=el('div','row');add(h,who2(who,el('div','dim small','ASKED '+ago(q.when))),btn('VIEW THEIR ID',()=>openId(who)));box.appendChild(h);

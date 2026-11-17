@@ -20,6 +20,7 @@
     %-  of
     :~  [%save (ot ~[lines+(ar ln)])]
         [%look (ot ~[who+(se %p)])]
+        [%fetch (ot ~[who+(se %p) mode+(cu |=(t=@t ;;(mode:id t)) so) have+(se %uv)])]
         [%forget (ot ~[who+(se %p)])]
         [%ask (ot ~[who+(se %p) note+so])]
         [%cancel (ot ~[who+(se %p)])]

@@ -1,9 +1,10 @@
 ::  sur/id -- ID: an identity card held on your own ship.
 ::
 |%
-::  one line of an ID.  key: a standard field ('name', 'height', ...),
-::  'photo' (value is a data:image/ URL) or a custom line ('x1', 'x2', ...).
-::  pub: shown to anyone who looks.  Otherwise only to ships
+::  one line of an ID.  key: a standard field ('first', 'height', ...),
+::  'photo' (value is a data:image/ URL), 'thumb' (the same photo, tiny,
+::  for lists; it goes wherever the photo goes) or a custom line ('x1',
+::  'x2', ...).  pub: shown to anyone who looks.  Otherwise only to ships
 ::  we accept.
 ::
 +$  line  [key=@ta label=@t value=@t pub=?]
@@ -17,21 +18,40 @@
 ::
 +$  view  [lines=(list line) hidden=@ud =ask]
 ::
-::  an ID we have looked up
+::  fetching an ID: %full when it is opened, %row for a line in a list
+::  (only the names and the thumbnail)
+::
++$  mode  ?(%full %row)
+::
+::  a photo: its hash, the photo ('' in a %row answer) and the thumbnail
+::
++$  pic  [hash=@uv full=@t thumb=@t]
+::
+::  the answer to a ship that watches /card/~itself/<mode>/<hash of the
+::  photo it already has, or 0v0>: the lines it may see (never the photo),
+::  whether it may see a photo and which one, then the photo itself unless
+::  it has it.  Then it is kicked: an answer, not a subscription.
+::
++$  news
+  $%  [%lines lines=(list line) hidden=@ud =ask pic=(unit [hash=@uv pub=?])]
+      [%pic =pic]
+  ==
+::
+::  a ship we have looked up.  Its ID is never kept, only fetched.
 ::
 +$  entry
-  $:  view=(unit view)                    ::  as last sent (~ = no answer yet)
-      got=(unit @da)                      ::  when that came
+  $:  added=@da                           ::  when we first looked it up
       asked=(unit @da)                    ::  our request, until they have it
-      gone=?                              ::  their ship refused: no ID there
-      fresh=?                             ::  they shared with us, not opened
+      fresh=?                             ::  it changed what we may see
+      told=@da                            ::  when it last said so
   ==
 ::
 ::  pokes from our own page
 ::
 +$  action
   $%  [%save lines=(list line)]           ::  our ID, all of it
-      [%look who=@p]                      ::  look a ship up (and keep watching)
+      [%look who=@p]                      ::  put a ship on our list
+      [%fetch who=@p =mode have=@uv]      ::  ask a ship for its ID
       [%forget who=@p]
       [%ask who=@p note=@t]               ::  ask to see its private lines
       [%cancel who=@p]

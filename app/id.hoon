@@ -1,30 +1,46 @@
 ::  id -- ID: an identity card held on your own ship.
 ::
 ::  You fill in whatever lines you like, each public or private, and one
-::  photo.  Any ship running ID can look you up: it watches /view/~itself
-::  here and is sent only what it may see -- the public lines.  To see the
-::  rest it asks.  You accept, deny or block.  A ship you accept sees all
-::  your lines, with your later edits, until you revoke.
+::  photo.  Your ID stays on your ship.  Another ship running ID fetches it
+::  when its owner opens it: it watches /card/~itself/<mode>/<photo it
+::  has>, is sent what it may see, and is kicked.  That is an answer, not a
+::  subscription; it is shown and not kept.  The other ship keeps only its
+::  list of the ships it has looked up and its own pending requests.
 ::
-::  Revoking takes the lines out of the copy on the other ship if that ship
-::  runs this code.  Anything already shown could have been written down:
-::  revoking stops updates, it can't make anyone unsee.
+::  To see private lines a ship asks.  You accept, deny or block.  A ship
+::  you accept sees your whole ID until you revoke.  Whenever what a ship
+::  may see changes, it is sent a %nudge, so it can fetch again.
+::
+::  Nothing here can stop someone writing down what they were shown.
+::
+::  Ships still running the first version watch /view/~itself and are sent
+::  their whole view on every change, as they expect.
 ::
 /-  *id
 /+  default-agent, dbug, server
 |%
-+$  state-1
-  $:  %1
++$  state-2
+  $:  %2
       lines=(list line)                  ::  our ID
       allowed=(set @p)                   ::  ships that see all of it
       inbox=(map @p [note=@t when=@da])  ::  requests waiting on us
       declined=(set @p)                  ::  requests we turned down
       blocked=(set @p)
-      book=(map @p entry)                ::  IDs we have looked up
+      book=(map @p entry)                ::  ships we have looked up
   ==
-::  the first build shared chosen lines with each ship; a ship that was
-::  shown any lines is now allowed to see them all
+::  earlier states.  They kept a copy of every ID looked up; the upgrade
+::  throws the copies away.
 ::
++$  entry-0  [view=(unit view) got=(unit @da) asked=(unit @da) gone=? fresh=?]
++$  state-1
+  $:  %1
+      lines=(list line)
+      allowed=(set @p)
+      inbox=(map @p [note=@t when=@da])
+      declined=(set @p)
+      blocked=(set @p)
+      book=(map @p entry-0)
+  ==
 +$  state-0
   $:  %0
       lines=(list line)
@@ -32,9 +48,9 @@
       inbox=(map @p [note=@t when=@da])
       declined=(set @p)
       blocked=(set @p)
-      book=(map @p entry)
+      book=(map @p entry-0)
   ==
-+$  versioned  $%(state-0 state-1)
++$  versioned  $%(state-0 state-1 state-2)
 +$  card  card:agent:gall
 ::
 ++  max-lines  40
@@ -42,6 +58,7 @@
 ++  max-label  40
 ++  max-value  1.000
 ++  max-photo  400.000
+++  max-thumb  40.000
 ++  max-note  280
 ++  max-inbox  200
 ++  max-book  2.000
@@ -61,37 +78,113 @@
       (lte (met 3 key.l) (mul k max-key))
       (lte (met 3 label.l) (mul k max-label))
       !=(0 (met 3 value.l))
-      ?.  =('photo' key.l)
-        (lte (met 3 value.l) (mul k max-value))
-      ?&  (lte (met 3 value.l) (mul k max-photo))
-          =('data:image/' (end [3 11] value.l))
-      ==
+      ?:  =('photo' key.l)  (good-image value.l (mul k max-photo))
+      ?:  =('thumb' key.l)  (good-image value.l (mul k max-thumb))
+      (lte (met 3 value.l) (mul k max-value))
   ==
+::
+++  good-image
+  |=  [v=@t max=@ud]
+  ^-  ?
+  &((lte (met 3 v) max) =('data:image/' (end [3 11] v)))
 ::
 ++  good-lines
   |=  [k=@ud ls=(list line)]
   ^-  ?
-  ?&  (lte (lent ls) (mul k max-lines))
+  ?&  (lte (lent ls) (add 1 (mul k max-lines)))
       (levy ls |=(l=line (good-line k l)))
       =((lent ls) ~(wyt in (silt (turn ls |=(l=line key.l)))))
   ==
 ::
-::  what ship who may see of our ID
+::  a photo from another ship: the hash must be the photo's ('' in a %row
+::  answer, which carries only the thumbnail)
 ::
-++  view-for
-  |=  [st=state-1 who=@p]
-  ^-  view
-  =/  all=?
-    &((~(has in allowed.st) who) !(~(has in blocked.st) who))
-  =/  vis=(list line)
-    (skim lines.st |=(l=line |(all pub.l)))
-  :+  vis
-    (sub (lent lines.st) (lent vis))
+++  good-pic
+  |=  p=pic
+  ^-  ?
+  ?&  |(=('' full.p) (good-image full.p (mul 2 max-photo)))
+      |(=('' thumb.p) (good-image thumb.p (mul 2 max-thumb)))
+      |(=('' full.p) =(hash.p (sham full.p)))
+  ==
+::
+++  find-line
+  |=  [ls=(list line) k=@ta]
+  ^-  (unit line)
+  |-
+  ?~  ls  ~
+  ?:  =(k key.i.ls)  `i.ls
+  $(ls t.ls)
+::
+::  the thumbnail goes with the photo: dropped without one, private with it
+::
+++  norm
+  |=  ls=(list line)
+  ^-  (list line)
+  =/  p  (find-line ls 'photo')
+  ?~  p  (skip ls |=(l=line =('thumb' key.l)))
+  (turn ls |=(l=line ?.(=('thumb' key.l) l l(pub pub.u.p))))
+::
+++  names  (silt `(list @ta)`~['first' 'last' 'preferred' 'name'])
+::
+++  sees
+  |=  [st=state-2 who=@p]
+  ^-  ?
+  &((~(has in allowed.st) who) !(~(has in blocked.st) who))
+::
+++  ask-for
+  |=  [st=state-2 who=@p]
+  ^-  ask
   ?:  (~(has by inbox.st) who)  %wait
   ?:  (~(has in declined.st) who)  %no
   %none
 ::
-::  ships watching our ID, each on its own path
+::  what ship who may see of our ID (the thumbnail aside)
+::
+++  view-for
+  |=  [st=state-2 who=@p]
+  ^-  view
+  =/  all=?  (sees st who)
+  =/  ls=(list line)  (skip lines.st |=(l=line =('thumb' key.l)))
+  =/  vis=(list line)  (skim ls |=(l=line |(all pub.l)))
+  [vis (sub (lent ls) (lent vis)) (ask-for st who)]
+::
+::  the photo, if who may see it
+::
+++  pic-for
+  |=  [st=state-2 who=@p]
+  ^-  (unit [hash=@uv pub=?])
+  =/  p  (find-line lines.st 'photo')
+  ?~  p  ~
+  ?.  |(pub.u.p (sees st who))  ~
+  `[(sham value.u.p) pub.u.p]
+::
+::  our answer when who fetches our ID (then it is kicked)
+::
+++  answer
+  |=  [st=state-2 who=@p =mode have=@uv]
+  ^-  (list card)
+  =/  v  (view-for st who)
+  =/  ls=(list line)
+    %+  skip  lines.v
+    |=  l=line
+    ?|  =('photo' key.l)
+        &(?=(%row mode) !(~(has in names) key.l))
+    ==
+  =/  pf  (pic-for st who)
+  =/  give  |=(n=news `card`[%give %fact ~ %id-news !>(n)])
+  :-  (give [%lines ls hidden.v ask.v pf])
+  =/  p  (find-line lines.st 'photo')
+  ?~  pf  ~
+  ?~  p  ~
+  =/  t  (find-line lines.st 'thumb')
+  =/  thumb=@t  ?~(t '' value.u.t)
+  ?:  ?=(%row mode)
+    ?:  =('' thumb)  ~
+    ~[(give [%pic hash.u.pf '' thumb])]
+  ?:  =(have hash.u.pf)  ~
+  ~[(give [%pic hash.u.pf value.u.p thumb])]
+::
+::  ships running the first version, each on its own /view path
 ::
 ++  viewers
   |=  =bowl:gall
@@ -104,35 +197,69 @@
   (slaw %p i.t.path)
 ::
 ++  give-view
-  |=  [st=state-1 who=@p]
+  |=  [st=state-2 who=@p]
   ^-  card
   [%give %fact ~[/view/(scot %p who)] %id-view !>((view-for st who))]
 ::
+::  after a change to our ID: our page, and first-version watchers
+::
 ++  publish
-  |=  [=bowl:gall st=state-1]
+  |=  [=bowl:gall st=state-2]
   ^-  (list card)
   :-  (ui-mine st)
   %+  turn  ~(tap in (viewers bowl))
   |=(who=@p (give-view st who))
 ::
-++  look-wire
-  |=  who=@p
-  ^-  wire
-  /look/(scot %p who)
+::  after a change to what who alone may see: our page, a first-version
+::  watcher's view, and a nudge to fetch again
 ::
-++  watch
-  |=  [=bowl:gall who=@p]
+++  tell
+  |=  [st=state-2 who=@p]
+  ^-  (list card)
+  :~  (ui-mine st)
+      (give-view st who)
+      (send who [%nudge ~])
+  ==
+::
+::  fetching: one answer, on a wire of its own.  A fetch of the same kind
+::  still waiting (a ship that is offline) is dropped first.
+::
+++  fetch
+  |=  [=bowl:gall who=@p =mode have=@uv]
   ^-  (list card)
   ?:  =(who our.bowl)  ~
-  ?:  (~(has by wex.bowl) [(look-wire who) who %id])  ~
-  ~[[%pass (look-wire who) %agent [who %id] %watch /view/(scot %p our.bowl)]]
+  %+  snoc  (drop-fetches bowl who `mode)
+  :*  %pass  ~[%get (scot %p who) mode (scot %da now.bowl)]
+      %agent  [who %id]
+      %watch  ~[%card (scot %p our.bowl) mode (scot %uv have)]
+  ==
+::
+::  a ship running the first version answers only on /view, and keeps
+::  sending; we take one answer and leave
+::
+++  fetch-old
+  |=  [=bowl:gall who=@p =mode]
+  ^-  card
+  :*  %pass  ~[%old (scot %p who) mode (scot %da now.bowl)]
+      %agent  [who %id]
+      %watch  /view/(scot %p our.bowl)
+  ==
+::
+++  drop-fetches
+  |=  [=bowl:gall who=@p which=(unit mode)]
+  ^-  (list card)
+  %+  murn  ~(tap by wex.bowl)
+  |=  [[w=wire s=@p d=term] *]
+  ^-  (unit card)
+  ?.  &(=(s who) =(d %id))  ~
+  ?.  ?=([?(%get %old) @ @ @ ~] w)  ~
+  ?:  &(?=(^ which) !=(u.which i.t.t.w))  ~
+  `[%pass w %agent [who %id] %leave ~]
 ::
 ++  send
   |=  [who=@p =msg]
   ^-  card
   [%pass ~[%msg -.msg (scot %p who)] %agent [who %id] %poke %id-msg !>(msg)]
-::
-++  blank  `entry`[~ ~ ~ | |]
 ::
 ::  JSON for our own page
 ::
@@ -151,29 +278,19 @@
       ['pub' b+pub.l]
   ==
 ::
-++  view-json
-  |=  v=view
-  ^-  json
-  %-  pairs:enjs:format
-  :~  ['lines' a+(turn lines.v line-json)]
-      ['hidden' (numb:enjs:format hidden.v)]
-      ['ask' s+ask.v]
-  ==
-::
 ++  entry-json
   |=  [who=@p e=entry]
   ^-  json
   %-  pairs:enjs:format
   :~  ['who' s+(scot %p who)]
-      ['view' ?~(view.e ~ (view-json u.view.e))]
-      ['got' (ms got.e)]
+      ['added' (ms `added.e)]
       ['asked' (ms asked.e)]
-      ['gone' b+gone.e]
       ['fresh' b+fresh.e]
+      ['told' (ms `told.e)]
   ==
 ::
 ++  mine-json
-  |=  st=state-1
+  |=  st=state-2
   ^-  json
   %-  pairs:enjs:format
   :~  ['lines' a+(turn lines.st line-json)]
@@ -191,13 +308,48 @@
       ['blocked' a+(turn ~(tap in blocked.st) |=(p=@p `json`s+(scot %p p)))]
   ==
 ::
+::  a fetched ID, passed straight to our page and not kept
+::
+++  ui-news
+  |=  [who=@p =mode n=news]
+  ^-  card
+  %-  ui
+  ?-    -.n
+      %lines
+    %+  frond:enjs:format  'got'
+    %-  pairs:enjs:format
+    :~  ['who' s+(scot %p who)]
+        ['mode' s+mode]
+        ['lines' a+(turn lines.n line-json)]
+        ['hidden' (numb:enjs:format hidden.n)]
+        ['ask' s+ask.n]
+        :-  'pic'
+        ?~  pic.n  ~
+        (pairs:enjs:format ~[['hash' s+(scot %uv hash.u.pic.n)] ['pub' b+pub.u.pic.n]])
+    ==
+  ::
+      %pic
+    %+  frond:enjs:format  'pic'
+    %-  pairs:enjs:format
+    :~  ['who' s+(scot %p who)]
+        ['hash' s+(scot %uv hash.pic.n)]
+        ['full' s+full.pic.n]
+        ['thumb' s+thumb.pic.n]
+    ==
+  ==
+::
+++  ui-who
+  |=  [key=@t who=@p =mode]
+  ^-  card
+  (ui (frond:enjs:format key (pairs:enjs:format ~[['who' s+(scot %p who)] ['mode' s+mode]])))
+::
 ++  ui
   |=  jon=json
   ^-  card
   [%give %fact ~[/ui] %json !>(jon)]
 ::
 ++  ui-mine
-  |=  st=state-1
+  |=  st=state-2
   ^-  card
   (ui (frond:enjs:format 'mine' (mine-json st)))
 ::
@@ -274,7 +426,7 @@
 ::
 %-  stamped
 %-  agent:dbug
-=|  state-1
+=|  state-2
 =*  state  -
 ^-  agent:gall
 |_  =bowl:gall
@@ -295,16 +447,26 @@
   =/  prev  (mole |.(!<(versioned old)))
   ?~  prev  ~|(%id-cannot-read-saved-state !!)
   =/  o=versioned  u.prev
+  =/  up
+    |=  b=(map @p entry-0)
+    ^-  (map @p entry)
+    (~(run by b) |=(e=entry-0 `entry`[(fall got.e now.bowl) asked.e fresh.e (fall got.e now.bowl)]))
   =.  state
     ?-  -.o
-      %1  o
-      %0  [%1 lines.o ~(key by grants.o) inbox.o declined.o blocked.o book.o]
+      %2  o
+      %1  [%2 lines.o allowed.o inbox.o declined.o blocked.o (up book.o)]
+      %0  [%2 lines.o ~(key by grants.o) inbox.o declined.o blocked.o (up book.o)]
     ==
   :_  this
   :-  claim
-  ::  watch again any ID a lost subscription dropped
-  %-  zing
-  (turn ~(tap in ~(key by book)) |=(w=@p (watch bowl w)))
+  ?:  ?=(%2 -.o)  ~
+  ::  the first versions kept a standing subscription to every ID looked
+  ::  up: leave them
+  %+  murn  ~(tap by wex.bowl)
+  |=  [[w=wire s=@p d=term] *]
+  ^-  (unit card)
+  ?.  &(=(d %id) ?=([%look @ ~] w))  ~
+  `[%pass w %agent [s %id] %leave ~]
 ::
 ++  on-poke
   |=  [=mark =vase]
@@ -315,10 +477,11 @@
     =/  act  !<(action vase)
     ?-    -.act
         %save
-      ?.  (good-lines 1 lines.act)
+      =/  ls=(list line)  (norm lines.act)
+      ?.  (good-lines 1 ls)
         :_  this
         ~[(note 'Not saved: a line is too long, there are too many lines, or a line is repeated.')]
-      =.  lines  lines.act
+      =.  lines  ls
       [(publish bowl state) this]
     ::
         %look
@@ -326,25 +489,22 @@
       =/  had  (~(get by book) who.act)
       ?:  &(?=(~ had) (gte ~(wyt by book) max-book))
         [~[(note 'Your list of IDs is full: forget some first.')] this]
-      =/  e=entry  ?~(had blank u.had(fresh |, gone |))
+      =/  e=entry  ?~(had [now.bowl ~ | now.bowl] u.had(fresh |))
       =.  book  (~(put by book) who.act e)
-      :_  this
-      :-  (ui-entry who.act e)
-      (watch bowl who.act)
+      [~[(ui-entry who.act e)] this]
+    ::
+        %fetch
+      [(fetch bowl who.act mode.act have.act) this]
     ::
         %forget
       =/  had  (~(get by book) who.act)
       ?~  had  `this
       =.  book  (~(del by book) who.act)
-      =/  waiting=?
-        ?|  ?=(^ asked.u.had)
-            ?&(?=(^ view.u.had) ?=(%wait ask.u.view.u.had))
-        ==
+      ::  withdraw any request: we don't keep whether one still waits there
       :_  this
       ;:  weld
-        ?.(waiting ~ ~[(send who.act [%cancel ~])])
-        ?.  (~(has by wex.bowl) [(look-wire who.act) who.act %id])  ~
-        ~[[%pass (look-wire who.act) %agent [who.act %id] %leave ~]]
+        ~[(send who.act [%cancel ~])]
+        (drop-fetches bowl who.act ~)
         ~[(ui (frond:enjs:format 'gone' s+(scot %p who.act)))]
       ==
     ::
@@ -355,14 +515,9 @@
       =/  had  (~(get by book) who.act)
       ?:  &(?=(~ had) (gte ~(wyt by book) max-book))
         [~[(note 'Your list of IDs is full: forget some first.')] this]
-      =/  e=entry  ?~(had blank u.had(fresh |, gone |))
-      =.  e  e(asked `now.bowl)
+      =/  e=entry  ?~(had [now.bowl `now.bowl | now.bowl] u.had(asked `now.bowl, fresh |))
       =.  book  (~(put by book) who.act e)
-      :_  this
-      :*  (ui-entry who.act e)
-          (send who.act [%ask note.act])
-          (watch bowl who.act)
-      ==
+      [~[(ui-entry who.act e) (send who.act [%ask note.act])] this]
     ::
         %cancel
       =/  had  (~(get by book) who.act)
@@ -377,34 +532,37 @@
       =.  inbox  (~(del by inbox) who.act)
       =.  declined  (~(del in declined) who.act)
       =.  blocked  (~(del in blocked) who.act)
-      =/  cards=(list card)  ~[(ui-mine state) (give-view state who.act)]
-      ::  a ship that isn't watching is told to come and look
-      ?:  (~(has in (viewers bowl)) who.act)  [cards this]
-      [(snoc cards (send who.act [%nudge ~])) this]
+      [(tell state who.act) this]
     ::
         %revoke
       =.  allowed  (~(del in allowed) who.act)
-      [~[(ui-mine state) (give-view state who.act)] this]
+      [(tell state who.act) this]
     ::
         %decline
       =.  inbox  (~(del by inbox) who.act)
       =.  declined  (~(put in declined) who.act)
-      [~[(ui-mine state) (give-view state who.act)] this]
+      [(tell state who.act) this]
     ::
         %block
       ?:  =(who.act our.bowl)  `this
-      ::  a waiting request is declined; a ship that never asked is told
-      ::  nothing, so blocking looks like nothing at all
+      ::  a waiting request is declined and an allowed ship loses its view,
+      ::  and either is told; a ship that had neither is told nothing, so
+      ::  blocking looks like nothing at all
+      =/  told=?
+        |((~(has by inbox) who.act) (~(has in allowed) who.act))
       =?  declined  (~(has by inbox) who.act)  (~(put in declined) who.act)
       =.  inbox  (~(del by inbox) who.act)
       =.  allowed  (~(del in allowed) who.act)
       =.  blocked  (~(put in blocked) who.act)
+      ?:  told  [(tell state who.act) this]
       [~[(ui-mine state) (give-view state who.act)] this]
     ::
         %unblock
       ::  a fresh start: they may ask again, and they see that at once
+      =/  told=?  (~(has in declined) who.act)
       =.  blocked  (~(del in blocked) who.act)
       =.  declined  (~(del in declined) who.act)
+      ?:  told  [(tell state who.act) this]
       [~[(ui-mine state) (give-view state who.act)] this]
     ==
   ::
@@ -431,16 +589,17 @@
       [~[(ui-mine state) (give-view state who)] this]
     ::
         %nudge
+      ::  what we may see of their ID changed: mark it, and tell our page.
+      ::  The time changes our state, so a page that missed this notices.
       ?:  (~(has in blocked) who)  `this
       =/  had  (~(get by book) who)
       ?:  &(?=(~ had) (gte ~(wyt by book) max-book))  `this
-      =/  e=entry  ?~(had blank u.had(gone |))
-      =.  e  e(fresh &)
+      =/  e=entry  ?~(had [now.bowl ~ & now.bowl] u.had(fresh &, told now.bowl))
       =.  book  (~(put by book) who e)
       :_  this
-      :+  (ui-entry who e)
-        (note (rap 3 ~[(scot %p who) ' let you see their whole ID.']))
-      (watch bowl who)
+      :~  (ui-entry who e)
+          (ui (frond:enjs:format 'nudge' s+(scot %p who)))
+      ==
     ==
   ::
       %handle-http-request
@@ -479,6 +638,18 @@
         ==
     ==
   ::
+  ::  a ship fetching our ID: one answer, then kicked
+  ::
+      [%card @ @ @ ~]
+    =/  who=@p  (slav %p i.t.path)
+    ?>  =(src.bowl who)
+    =/  =mode  ;;(mode i.t.t.path)
+    =/  have=@uv  (slav %uv i.t.t.t.path)
+    :_  this
+    (snoc (answer state who mode have) [%give %kick ~ ~])
+  ::
+  ::  a ship running the first version
+  ::
       [%view @ ~]
     =/  who=@p  (slav %p i.t.path)
     ?>  =(src.bowl who)
@@ -494,8 +665,7 @@
   ::  a hash of everything the page shows (see +stamped)
   ::
       [%x %stamp ~]
-    =/  marks  (~(run by book) |=(e=entry [got.e asked.e gone.e fresh.e]))
-    ``json+!>(`json`s+(scot %uv (sham [lines allowed inbox declined blocked marks])))
+    ``json+!>(`json`s+(scot %uv (sham [lines allowed inbox declined blocked book])))
   ==
 ::
 ++  on-agent
@@ -504,50 +674,79 @@
   ?+    wire  (on-agent:def wire sign)
       [%msg @ @ ~]
     ?.  ?=(%poke-ack -.sign)  `this
-    ?~  p.sign  `this
     =/  who=@p  (slav %p i.t.t.wire)
-    =/  what=@t  (rap 3 ~['The ship ' (scot %p who) ' did not take that. Is ID installed there?'])
-    ?.  =(%ask i.t.wire)  [~[(note what)] this]
+    ::  a request or cancel arrived: our page fetches again to see it
+    ?~  p.sign
+      ?.  ?=(?(%ask %cancel) i.t.wire)  `this
+      [~[(ui (frond:enjs:format 'acked' s+(scot %p who)))] this]
+    ?.  ?=(%ask i.t.wire)  `this
+    =/  what=@t
+      (rap 3 ~['The ship ' (scot %p who) ' did not take your request. Is ID installed there?'])
     =/  had  (~(get by book) who)
     ?~  had  [~[(note what)] this]
     =/  e=entry  u.had(asked ~)
     =.  book  (~(put by book) who e)
     [~[(ui-entry who e) (note what)] this]
   ::
-      [%look @ ~]
+      [%get @ @ @ ~]
     =/  who=@p  (slav %p i.t.wire)
-    =/  had  (~(get by book) who)
-    ?-    -.sign
-        %poke-ack  `this
-    ::
+    =/  =mode  ;;(mode i.t.t.wire)
+    ?+    -.sign  `this
         %watch-ack
       ?~  p.sign  `this
-      ?~  had  `this
-      =/  e=entry  u.had(gone &)
-      =.  book  (~(put by book) who e)
-      [~[(ui-entry who e)] this]
-    ::
-        %kick
-      ?~  had  `this
-      [(watch bowl who) this]
+      ::  no answer on /card: an ID app from before fetching, or none
+      [~[(fetch-old bowl who mode)] this]
     ::
         %fact
-      ?~  had  `this
-      ?.  =(%id-view p.cage.sign)  `this
-      =/  v  (mole |.(!<(view q.cage.sign)))
-      ?~  v  `this
-      ?.  (good-lines 2 lines.u.v)  `this
-      ::  our request is theirs once they say it waits or was declined
-      =/  e=entry
-        %=  u.had
-          view   v
-          got    `now.bowl
-          gone   |
-          asked  ?:(?=(%none ask.u.v) asked.u.had ~)
-        ==
-      =.  book  (~(put by book) who e)
-      [~[(ui-entry who e)] this]
+      ?.  =(%id-news p.cage.sign)  `this
+      =/  n  (mole |.(!<(news q.cage.sign)))
+      ?~  n  `this
+      ?-    -.u.n
+          %pic
+        ?.  (good-pic pic.u.n)  `this
+        [~[(ui-news who mode u.n)] this]
+      ::
+          %lines
+        ?.  (good-lines 2 lines.u.n)  `this
+        ::  our request is theirs once they say it waits or was declined
+        =/  had  (~(get by book) who)
+        ?:  |(?=(~ had) ?=(~ asked.u.had) ?=(%none ask.u.n))
+          [~[(ui-news who mode u.n)] this]
+        =/  e=entry  u.had(asked ~)
+        =.  book  (~(put by book) who e)
+        [~[(ui-entry who e) (ui-news who mode u.n)] this]
+      ==
     ==
+  ::
+      [%old @ @ @ ~]
+    =/  who=@p  (slav %p i.t.wire)
+    =/  =mode  ;;(mode i.t.t.wire)
+    ?+    -.sign  `this
+        %watch-ack
+      ?~  p.sign  `this
+      [~[(ui-who 'noapp' who mode)] this]
+    ::
+        %fact
+      ::  one answer, as a fetch would give it; then stop listening
+      =/  leave=card  [%pass wire %agent [who %id] %leave ~]
+      ?.  =(%id-view p.cage.sign)  [~[leave] this]
+      =/  v  (mole |.(!<(view q.cage.sign)))
+      ?~  v  [~[leave] this]
+      ?.  (good-lines 2 lines.u.v)  [~[leave] this]
+      =/  p  (find-line lines.u.v 'photo')
+      =/  ls  (skip lines.u.v |=(l=line |(=('photo' key.l) =('thumb' key.l))))
+      =/  ph=(unit [hash=@uv pub=?])  ?~(p ~ `[(sham value.u.p) pub.u.p])
+      :_  this
+      ;:  weld
+        ~[(ui-news who mode [%lines ls hidden.u.v ask.u.v ph])]
+        ?~(p ~ ~[(ui-news who mode [%pic (sham value.u.p) value.u.p ''])])
+        ~[leave]
+      ==
+    ==
+  ::
+  ::  standing subscriptions from the first versions, being left
+  ::
+      [%look @ ~]  `this
   ==
 ::
 ++  on-arvo

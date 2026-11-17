@@ -80,5 +80,5 @@ Built for `[%zuse 408]`.
 
 ## Licence
 
-MIT for this project's code. Third-party parts keep their own licences; see
-[LICENSE](LICENSE).
+MIT for this project's code; see [LICENSE](LICENSE). Third-party parts keep
+their own licences; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

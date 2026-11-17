@@ -158,6 +158,85 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
 .scanbar{display:flex;gap:12px;align-items:center;width:min(92vw,520px)}
 .hide{display:none!important}
 .boot{padding:60px 16px;text-align:center;color:var(--dim);letter-spacing:.2em}
+/* loading screen: shown until what a page needs (its pictures too) has come */
+.loader{min-height:46vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 12px;text-align:center}
+.loader .lret{width:46px;height:46px;position:relative;animation:lspin 2.4s linear infinite}
+.loader .lret:before,.loader .lret:after{content:'';position:absolute;width:14px;height:14px;border:2px solid var(--c);box-shadow:0 0 8px rgba(57,200,255,.5)}
+.loader .lret:before{left:0;top:0;border-right:0;border-bottom:0}
+.loader .lret:after{right:0;bottom:0;border-left:0;border-top:0}
+.loader .lret i{position:absolute;inset:17px;background:var(--c);box-shadow:0 0 10px var(--c);animation:lblink 1.2s steps(2) infinite}
+@keyframes lspin{to{transform:rotate(360deg)}}
+@keyframes lblink{50%{opacity:.15}}
+.loader .lt{color:var(--w);letter-spacing:.34em;font-size:13px}
+.loader .lbar{width:min(300px,72vw);height:6px;border:1px solid var(--dim);position:relative;overflow:hidden;background:#000}
+.loader .lbar i{position:absolute;left:0;top:0;bottom:0;background:var(--c);box-shadow:0 0 8px var(--c)}
+.loader .lbar.ind i{width:32%;animation:lind 1.2s ease-in-out infinite}
+@keyframes lind{from{left:-32%}to{left:100%}}
+.loader .ls{color:var(--dim);font-size:10px;letter-spacing:.2em;word-break:break-word}
+@media (prefers-reduced-motion:reduce){.loader .lret,.loader .lret i,.loader .lbar.ind i{animation:none}.loader .lbar.ind i{left:34%}}
+/* a list picture still on its way, and one arriving */
+.face.wait,.sig.wait{display:block;flex:none;border:1px solid var(--line);background:#000 repeating-linear-gradient(45deg,#03101e 0 3px,#000 3px 6px)}
+.fadein{animation:fadein .3s ease-out}
+@keyframes fadein{from{opacity:0}}
+/* MY ID: the card, which flips over to the look-up code on its back */
+.single{max-width:560px;margin:0 auto}
+.bright{display:flex;align-items:center;gap:10px;min-width:0}
+.flipbtn{width:36px;height:36px;padding:0;border:1px solid var(--c);background:#000913;color:var(--c);display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 12px rgba(57,200,255,.35)}
+.flipbtn svg{width:24px;height:24px;display:block}
+.flipbtn:hover:not(:disabled){background:var(--p2);color:var(--w)}
+.flip{perspective:1600px}
+.flip .fin{display:grid;transition:transform .55s cubic-bezier(.3,.1,.2,1);transform-style:preserve-3d}
+.flip.on .fin{transform:rotateY(180deg)}
+.flip .side{grid-area:1/1;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.flip .side.back{transform:rotateY(180deg)}
+@media (prefers-reduced-motion:reduce){.flip .fin{transition:none}}
+.doc.back{display:flex;flex-direction:column}
+.doc.back .bk{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 12px 14px}
+.seg.gone{visibility:hidden}
+.doc.back .qr{max-width:230px}
+.doc.back .bkship{color:var(--w);font-size:16px;letter-spacing:.06em;word-break:break-all;text-align:center}
+.doc.back .bksub{color:var(--dim);font-size:10px;letter-spacing:.3em}
+.doc.back .tip{text-align:center;max-width:380px}
+.actbar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+.actbar button{padding:12px 10px;font-size:14px}
+.edtop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.edtop .edtitle{color:var(--w);letter-spacing:.32em;font-size:12px;text-align:center}
+.pvbtn{display:none}
+.cols.edit>.left{position:sticky;top:64px}
+.vstat{margin-bottom:12px}
+/* SHOW ID: a live pass */
+.show{position:fixed;inset:0;z-index:70;background:#000d;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto}
+.show.hidden{display:none}
+.shbox{width:min(100%,440px);margin:auto 0;border:1px solid var(--c);background:linear-gradient(180deg,#05203b,#010a16 70%);box-shadow:0 0 40px rgba(57,200,255,.15);padding:14px;display:flex;flex-direction:column;gap:12px;align-items:stretch}
+.shbox.priv{border-color:var(--a);box-shadow:0 0 40px rgba(255,176,32,.15)}
+.shhead{display:flex;align-items:center;gap:10px}
+.shhead .t{flex:1;color:var(--w);letter-spacing:.34em;font-size:13px}
+.shhead .live{color:var(--r);font-size:10px;letter-spacing:.24em}
+.shhead .live:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--r);box-shadow:0 0 8px var(--r);margin-right:6px;vertical-align:0;animation:lblink 1.2s steps(2) infinite}
+@media (prefers-reduced-motion:reduce){.shhead .live:before{animation:none}}
+.shbox .seg{display:flex}.shbox .seg button{flex:1;padding:10px;font-size:12px;letter-spacing:.14em}
+.shbox.priv .seg{border-color:var(--a)}.shbox.priv .seg button.on{background:var(--a);color:#1a1000}
+.shqr{background:#fff;padding:10px;align-self:center;width:min(100%,330px)}
+.shqr img{display:block;width:100%;image-rendering:pixelated}
+.shmeta{display:flex;align-items:center;gap:12px}
+.shmeta .grow{min-width:0}
+.shkind{color:var(--c);letter-spacing:.24em;font-size:11px}
+.shbox.priv .shkind{color:var(--a)}
+.shship{color:var(--w);word-break:break-all}
+.ring{width:46px;height:46px;position:relative;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:3}
+.ring .bg{stroke:var(--line)}.ring .fg{stroke:var(--c);transition:stroke-dashoffset .25s linear}
+.shbox.priv .ring .fg{stroke:var(--a)}
+.ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--w)}
+.shbox .loader{min-height:250px;padding:10px}
+.shown{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 4px;text-align:center}
+.shown .big{color:var(--w);letter-spacing:.3em;font-size:13px}
+.shown .who{flex:none;cursor:default}
+/* a pass we scanned, checked live with its ship */
+.seal{background:#eef4f7;color:#001424;padding:10px 12px;margin-bottom:10px;border:3px double #001424;outline:1px solid #eef4f7}
+.seal .st{font-weight:900;letter-spacing:.18em;font-size:14px}
+.seal .ss{font-size:10px;letter-spacing:.14em;margin-top:2px;word-break:break-word}
 @media (max-width:860px){
  .cols{grid-template-columns:1fr}
  .cols>.left{display:contents}
@@ -165,6 +244,15 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
  .tabs{margin-left:0;width:100%}
  .tabs button{flex:1;padding:9px 4px}
  .ours{max-width:56vw}
+ /* on a phone the two buttons stay at the bottom of the screen */
+ .actbar{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#000913;border-top:1px solid var(--dim);box-shadow:0 -10px 24px #000c}
+ body.hasbar main{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+ body.hasbar .notes{bottom:calc(84px + env(safe-area-inset-bottom))}
+ /* editing on a phone: the editor, or the preview */
+ .pvbtn{display:inline-block}
+ .cols.edit #pvcol{display:none}
+ .cols.edit.showpv #pvcol{display:block}
+ .cols.edit.showpv #edcol{display:none}
 }
 @media (max-width:560px){
  main{padding:12px 12px 60px}
@@ -185,12 +273,13 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
  <span class="ours" id="ours"></span>
  <nav class="tabs" id="tabs"></nav>
 </header>
-<main id="main"><div class="boot">CONNECTING TO YOUR SHIP…</div></main>
+<main id="main"><div class="boot">ESTABLISHING LINK…</div></main>
 <div class="notes" id="notes"></div>
 <div class="scan hidden" id="scan">
  <div class="scanbox"><video id="scanvid" muted playsinline></video><div class="reticle"></div></div>
- <div class="scanbar"><span class="grow" id="scanmsg">POINT THE CAMERA AT AN ID CARD</span><button id="scanx">CLOSE</button></div>
+ <div class="scanbar"><span class="grow" id="scanmsg">POINT THE CAMERA AT AN ID CARD OR PASS</span><button id="scanx">CLOSE</button></div>
 </div>
+<div class="show hidden" id="show" role="dialog" aria-label="Show ID"></div>
 <input type="file" id="photoin" accept="image/*" class="hide">
 <input type="file" id="cardin" accept="image/*" capture="environment" class="hide">
 <script>
@@ -255,8 +344,12 @@ const NAMES=new Set(['first','last','preferred','name']);
 // first and last name; else what they go by; else a full name from an older ID
 function nameOf(ls){const f=lineOf(ls,'first'),l=lineOf(ls,'last'),n=[f&&f.value,l&&l.value].filter(Boolean).join(' ');if(n)return n;const o=lineOf(ls,'preferred')||lineOf(ls,'name');return o?o.value:null}
 
-const S={our:null,mine:{lines:[],allowed:[],inbox:[],blocked:[]},book:{},ready:false,error:null};
-const UI={tab:'me',open:null,preview:'owner',dirty:false,pending:null,look:'',confirm:null,qr:null,waitMs:8000};
+const S={our:null,mine:{lines:[],allowed:[],inbox:[],blocked:[]},book:{},pass:null,ready:false,error:null};
+// me: 'view' (the card, opening on its public side) or 'edit'
+// gate: a loading screen, held until a page's pictures have come (or gateMs)
+// pass: a live pass we scanned, being checked; show: our own SHOW ID screen
+const UI={tab:'me',open:null,me:'view',preview:'public',flipped:false,edPreview:false,dirty:false,pending:null,look:'',confirm:null,qr:null,
+ waitMs:8000,gateMs:2000,passWaitMs:10000,vk:null,gate:null,pass:null,show:null};
 // IDs fetched from other ships are held here, in this page, and nowhere else:
 // your ship keeps only the list of ships you have looked up.
 //   Seen[ship] = {row, full}: each {data, busy, off, noapp, since}
@@ -278,7 +371,7 @@ async function getStamp(){try{const r=await fetch('/~/scry/id/stamp.json',{crede
 async function liveCheck(){if(!S.ready||document.hidden||!Chan.es||Live.have==null)return;const st=await getStamp();if(st==null||st===Live.have)return;
  await new Promise(r=>setTimeout(r,2500));if(Live.have==null)return;const st2=await getStamp();if(st2!=null&&st2!==Live.have)connect()}
 setInterval(liveCheck,15000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden||!S.ready)return;liveCheck();if(UI.open)fetchId(UI.open,'full')});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&UI.show)closeShow('hidden');if(document.hidden||!S.ready)return;liveCheck();if(UI.open)fetchId(UI.open,'full')});
 async function connect(){Live.have=null;if(Chan.es)Chan.es.close();for(const f of Chan.wait.values())f('reconnected');Chan.wait.clear();Chan.url='/~/channel/id-'+Date.now().toString(36)+'-'+rid(5);Chan.id=0;Chan.q=[];Chan.busy=false;Chan.ack=-1;Chan.acked=-1;const u=Chan.url;
  try{if(!Chan.ship){const h=await fetch('/~/host',{credentials:'include'});if(!h.ok)throw Error('host '+h.status);Chan.ship=(await h.text()).trim().replace(/^~/,'')}Chan.sub=++Chan.id;const r=await put(u,[{id:Chan.sub,action:'subscribe',ship:Chan.ship,app:'id',path:'/ui'}]);if(!r.ok)throw Error('channel '+r.status)}
  catch(e){if(u===Chan.url){S.error='Cannot reach your ship: '+e.message;draw();setTimeout(connect,1000*Math.min(6,++Chan.retry))}return}
@@ -294,13 +387,18 @@ const same=(a,b)=>JSON.stringify(a.map(l=>[l.key,l.label,l.value,l.pub]))===JSON
 function fact(d){
  if(typeof d.stamp==='string'){Live.have=d.stamp;return}
  const before=S.mine.inbox.length;
- if(d.init){S.our=d.init.our;S.mine=d.init.mine;S.book={};for(const e of d.init.book||[]){S.book[e.who]=e;stale(e)}S.ready=true;if(!UI.dirty)redraft();if(UI.open)fetchId(UI.open,'full')}
- if(d.mine){S.mine=d.mine;if(UI.pending&&same(UI.pending,S.mine.lines)){UI.pending=null;UI.dirty=false}if(!UI.dirty)redraft()}
+ if(d.init){S.our=d.init.our;S.mine=d.init.mine;S.book={};for(const e of d.init.book||[]){S.book[e.who]=e;stale(e)}S.ready=true;if(!UI.dirty)redraft();if(UI.open)fetchId(UI.open,'full');
+  // a pass still live with no screen showing it (the page was closed): end it
+  setPass(d.init.pass);if(S.pass&&!UI.show)act({hide:null})}
+ if('pass' in d&&!d.init)setPass(d.pass);
+ if(d.mine){S.mine=d.mine;if(UI.pending&&same(UI.pending,S.mine.lines)){UI.pending=null;UI.dirty=false;if(UI.closeOnSave){UI.closeOnSave=false;leaveEdit(true)}}if(!UI.dirty)redraft()}
  if(d.entry){S.book[d.entry.who]=d.entry;stale(d.entry)}
  if(d.gone){delete S.book[d.gone];delete Seen[d.gone];if(UI.open===d.gone)UI.open=null}
- if(d.got)took(d.got);
- if(d.pic){const p=d.pic,x=Img[p.hash]||(Img[p.hash]={});if(p.full)x.full=p.full;if(p.thumb)x.thumb=p.thumb}
- if(d.noapp){const s=slot(d.noapp.who,d.noapp.mode);s.busy=false;s.noapp=true}
+ if(d.got){if(d.got.mode==='pass')tookPass(d.got);else took(d.got)}
+ if(d.pic){const p=d.pic,x=Img[p.hash]||(Img[p.hash]={});if(p.full){x.full=p.full;decoded(x,'full')}if(p.thumb){x.thumb=p.thumb;decoded(x,'thumb')}}
+ if(d.live&&UI.pass&&UI.pass.who===d.live.who&&!UI.pass.why)UI.pass.show=d.live.show;
+ if(d.passfail&&UI.pass&&UI.pass.who===d.passfail.who&&!UI.pass.data)UI.pass.why=d.passfail.why;
+ if(d.noapp){const s=slot(d.noapp.who,d.noapp.mode);s.busy=false;s.noapp=true;s.noappAt=Date.now()}
  if(d.nudge){(Seen[d.nudge]||(Seen[d.nudge]={})).announce=true;fetchId(d.nudge,'full')}
  if(d.acked)fetchId(d.acked,'full');
  if(d.note)note(d.note);
@@ -317,18 +415,66 @@ function slot(who,mode){const s=Seen[who]||(Seen[who]={});return s[mode]||(s[mod
 // ask a ship for its ID. No answer within a few seconds: offline or unavailable
 // (the answer still counts if it comes later). 'have' names a photo this page
 // already holds, so it isn't sent again.
-function fetchId(who,mode){if(!S.ready||!who||who===S.our)return;const s=slot(who,mode),f=Seen[who].full,h=f&&f.data&&f.data.pic&&f.data.pic.hash;
- const have=mode==='full'&&h&&Img[h]&&Img[h].full?h:'0v0';
+function fetchId(who,mode){if(!S.ready||!who||who===S.our)return;const s=slot(who,mode);
+ const have=mode==='full'?haveFor(who):'0v0';
  s.busy=true;s.since=Date.now();const since=s.since;clearTimeout(s.timer);
- s.timer=setTimeout(()=>{if(s.since===since&&s.busy){s.busy=false;s.off=true;draw()}},UI.waitMs);
+ s.timer=setTimeout(()=>{if(s.since===since&&s.busy){s.busy=false;s.off=true;s.offAt=Date.now();draw()}},UI.waitMs);
  act({fetch:{who,mode,have}})}
+// the full photo of a ship we hold, so it isn't sent again
+function haveFor(who){const f=Seen[who]&&Seen[who].full,h=f&&f.data&&f.data.pic&&f.data.pic.hash;return h&&Img[h]&&Img[h].full?h:'0v0'}
 function took(g){const s=slot(g.who,g.mode);s.data={lines:g.lines,hidden:g.hidden,ask:g.ask,pic:g.pic,at:Date.now()};s.busy=false;s.off=false;s.noapp=false;
  // a full answer is also the freshest row
  if(g.mode==='full'){const r=slot(g.who,'row');r.data={...s.data,lines:g.lines.filter(l=>NAMES.has(l.key))};r.off=false;r.noapp=false}
  const sn=Seen[g.who];if(sn.announce&&g.mode==='full'){sn.announce=false;const v=s.data;if(v.ask==='no')note(g.who+' denied your request.');else if(!v.hidden&&v.lines.some(l=>l.pub===false))note(g.who+' accepted your request: you see their whole ID.')}}
+// a pass we scanned: what it showed is held for this one view only, apart
+// from what we fetch, and dropped when we leave it
+function tookPass(g){const P=UI.pass;if(!P||P.who!==g.who||P.why||P.data)return;P.data={lines:g.lines,hidden:g.hidden,ask:g.ask,pic:g.pic,at:Date.now()};
+ const h=g.pic&&g.pic.hash;if(h&&!imgOk(h,'full'))setTimeout(()=>{if(UI.pass===P)draw()},4100)}
+// our own live pass, as our ship tells it: the time left counts from now
+function setPass(p){const was=S.pass,left=p&&+p.left||0;S.pass=p&&p.code?{code:p.code,show:p.show,used:p.used||null,end:Date.now()+left,total:was&&was.code===p.code?was.total:left}:null;drawShow()}
 function dataOf(who,mode){const sn=Seen[who];if(!sn)return null;const a=sn[mode]&&sn[mode].data;if(a||mode==='full')return a||null;return sn.full&&sn.full.data||null}
-function face(who,cls){const d=dataOf(who,'row'),h=d&&d.pic&&d.pic.hash,im=h&&Img[h],src=im&&(im.thumb||im.full);
- if(src&&IMG.test(src)){const i=el('img','face '+(cls||''));i.alt='';i.src=src;return i}return sig(who,cls)}
+// a ship's picture in a list: its thumbnail, else its sigil once we know it
+// has no photo, else a blank tile while we ask. The blank fades into what
+// comes, once; nothing is swapped for something else.
+const Faces={};
+function face(who,cls){const sn=Seen[who]||{},r=sn.row||{},f=sn.full||{},d=dataOf(who,'row'),h=d&&d.pic&&d.pic.hash,im=h&&Img[h],src=im&&(im.thumb||im.full);let e,now;
+ if(src&&IMG.test(src)){e=el('img','face '+(cls||''));e.alt='';e.src=src;now='i'}
+ else if(d||r.off||r.noapp||f.off||f.noapp||who===S.our){e=sig(who,cls);now='s'}
+ else{e=el('span','face wait '+(cls||''));now='w'}
+ if(Faces[who]==='w'&&now!=='w')e.classList.add('fadein');Faces[who]=now;return e}
+// pictures count as ready once the browser has decoded them, so they appear whole
+function decoded(x,k){if(x[k+'Ok']!=null)return;if(!IMG.test(x[k])){x[k+'Ok']=true;return}x[k+'Ok']=false;const i=new Image();i.src=x[k];
+ (i.decode?i.decode():Promise.resolve()).catch(()=>{}).then(()=>{x[k+'Ok']=true;if(UI.gate||UI.pass)draw()})}
+const imgOk=(h,k)=>{const x=h&&Img[h];return!!(x&&x[k]&&x[k+'Ok'])};
+const SigOk={};
+function sigReady(who){if(SigOk[who]==null){SigOk[who]=false;const i=new Image();i.onload=i.onerror=()=>{SigOk[who]=true;if(UI.gate)draw()};i.src=sigUrl(who)}return SigOk[who]}
+// a list row is ready when its picture is: the thumbnail, or the sigil of a
+// ship with no photo, offline, or without ID
+function rowDone(who){if(who===S.our)return true;const sn=Seen[who]||{},r=sn.row||{},f=sn.full||{},d=dataOf(who,'row');
+ if(!d)return!!(r.off||r.noapp||f.off||f.noapp)&&sigReady(who);
+ const h=d.pic&&d.pic.hash;return h?(imgOk(h,'thumb')||imgOk(h,'full')):sigReady(who)}
+
+/* ---------- loading screens ---------- */
+// Going to a list, or opening an ID, waits on a loading screen until the
+// pictures on the first screen have come, so they appear together and none
+// flashes from sigil to photo. An offline ship never answers: the wait ends
+// after gateMs (lists) or waitMs (an ID) whatever has come.
+function viewKey(){return UI.tab==='me'?'me':UI.tab==='asks'?'asks':!UI.open?'look':(UI.pass&&UI.pass.who===UI.open?'pass:':'id:')+UI.open}
+function listWho(vk){if(vk==='look')return Object.values(S.book).sort((a,b)=>(b.fresh-a.fresh)||((b.added||0)-(a.added||0))).map(e=>e.who);
+ const m=S.mine;return[...m.inbox.slice().sort((a,b)=>b.when-a.when).map(q=>q.who),...m.allowed.slice().sort(),...m.blocked.slice().sort()]}
+function gateFor(vk){const start=Date.now();let g=null;
+ if(vk==='look'||vk==='asks'){const want=listWho(vk).slice(0,Math.max(4,Math.min(16,Math.ceil(innerHeight/52))));for(const w of want)rowWanted(w);g={kind:'list',want,start,until:start+UI.gateMs}}
+ else if(vk.startsWith('id:'))g={kind:'id',who:vk.slice(3),start,until:start+UI.waitMs+300};
+ if(!g||gateDone(g))return null;setTimeout(()=>{if(UI.gate===g)draw()},g.until-start+30);return g}
+function gateDone(g){if(Date.now()>=g.until)return true;
+ if(g.kind==='list')return g.want.every(rowDone);
+ const f=slot(g.who,'full'),v=f.data;if((f.off&&f.offAt>=g.start)||(f.noapp&&f.noappAt>=g.start))return true;if(!v)return false;
+ const h=v.pic&&v.pic.hash;return!h||imgOk(h,'full')}
+function loader(title,sub,n,of){const w=el('div','loader'),r=el('div','lret'),dot=el('i'),bar=el('div','lbar'+(of?'':' ind')),fill=el('i');
+ // carry on the animations where the last drawing left them
+ const t=Date.now();r.style.animationDelay=-(t%2400)+'ms';dot.style.animationDelay=-(t%1200)+'ms';
+ if(of)fill.style.width=Math.round(100*n/of)+'%';else fill.style.animationDelay=-(t%1200)+'ms';
+ r.appendChild(dot);bar.appendChild(fill);add(w,r,el('div','lt',title),bar,el('div','ls',sub+(of?' · '+n+'/'+of:'')));return w}
 // lists fetch the names and thumbnail of each ship as its row comes into view
 let RowObs=null;
 function rowWanted(who){if(!who||who===S.our)return;const sn=Seen[who]||{},r=sn.row||{},f=sn.full||{};if(r.busy||f.busy)return;
@@ -346,7 +492,7 @@ function fromLines(ls){const by={};for(const l of ls)by[l.key]=l;let split=false
  return{split,photo:by.photo?{value:by.photo.value,pub:by.photo.pub,thumb:by.thumb?by.thumb.value:''}:{value:'',pub:false,thumb:''},std:FIELDS.map(([k,lab])=>({key:k,label:lab,value:by[k]?by[k].value:'',pub:by[k]?by[k].pub:false})),custom:ls.filter(l=>!['photo','thumb','name'].includes(l.key)&&!STD.has(l.key)).map(l=>({...l}))}}
 function redraft(){D=fromLines(S.mine.lines);if(D.split){UI.dirty=true;note('Your full name is now a first and a last name. Check them, then save.')}
  // a photo saved before thumbnails: make one and save it quietly
- if(D.photo.value&&!D.photo.thumb&&!UI.dirty&&!UI.thumbing){UI.thumbing=true;thumbOf(D.photo.value).then(t=>{UI.thumbing=false;if(!t||UI.dirty||!D.photo.value||D.photo.thumb)return;D.photo.thumb=t;const ls=toLines(D);UI.pending=ls;act({save:{lines:ls}})})}}
+ if(D.photo.value&&!D.photo.thumb&&!UI.dirty&&!UI.thumbing){UI.thumbing=true;thumbOf(D.photo.value).then(t=>{UI.thumbing=false;if(!t||UI.dirty||UI.pending||!D.photo.value||D.photo.thumb)return;D.photo.thumb=t;const ls=toLines(D);UI.pending=ls;UI.closeOnSave=false;act({save:{lines:ls}})})}}
 function toLines(d){const out=[];for(const l of d.std){const v=l.value.trim();if(v)out.push({key:l.key,label:l.label,value:v,pub:l.pub})}
  for(const l of d.custom){const v=l.value.trim();if(v)out.push({key:l.key,label:(l.label.trim()||'OTHER').toUpperCase(),value:v,pub:l.pub})}
  if(d.photo.value){out.push({key:'photo',label:'PHOTO',value:d.photo.value,pub:d.photo.pub});if(d.photo.thumb)out.push({key:'thumb',label:'THUMBNAIL',value:d.photo.thumb,pub:d.photo.pub})}return out}
@@ -354,9 +500,10 @@ const shown=ls=>ls.filter(l=>l.key!=='thumb');
 function problem(ls){if(shown(ls).length>LIM.lines)return'An ID holds at most '+LIM.lines+' lines.';for(const l of ls){if(bytes(l.label)>LIM.label)return'The label "'+l.label.slice(0,20)+'…" is too long.';if(l.key!=='photo'&&l.key!=='thumb'&&bytes(l.value)>LIM.value)return l.label+' is too long (at most '+LIM.value+' characters).';if(l.key==='photo'&&l.value.length>LIM.photo)return'That photo is too big.'}return null}
 function edited(){UI.dirty=true;drawPreview();drawSaveBar()}
 function newKey(){const used=new Set(D.custom.map(l=>l.key));let i=1;while(used.has('x'+i))i++;return'x'+i}
-async function save(){const bad=D.std.filter(o=>o.bad);if(bad.length){for(const o of bad)o.showBad=true;drawEditor();note(bad[0].label+': '+bad[0].bad);return}
- const ls=toLines(D);const p=problem(ls);if(p){note(p);return}UI.pending=ls;drawSaveBar();if(!await act({save:{lines:ls}})){UI.pending=null;drawSaveBar();return}
- setTimeout(()=>{if(UI.pending===ls){UI.pending=null;drawSaveBar()}},2500)}
+// close: back to the card once it is saved
+async function save(close){const bad=D.std.filter(o=>o.bad);if(bad.length){for(const o of bad)o.showBad=true;drawEditor();note(bad[0].label+': '+bad[0].bad);return}
+ const ls=toLines(D);const p=problem(ls);if(p){note(p);return}UI.pending=ls;UI.closeOnSave=!!close;drawSaveBar();if(!await act({save:{lines:ls}})){UI.pending=null;UI.closeOnSave=false;drawSaveBar();return}
+ setTimeout(()=>{if(UI.pending===ls){UI.pending=null;UI.closeOnSave=false;drawSaveBar()}},2500)}
 function discard(){UI.dirty=false;UI.pending=null;D=fromLines(S.mine.lines);D.split=false;draw()}
 function setPhoto(file){if(!file)return;const url=URL.createObjectURL(file);const im=new Image();
  im.onload=()=>{const W=480,H=600,r=W/H;let sw=im.naturalWidth,sh=im.naturalHeight,sx=0,sy=0;if(sw/sh>r){sw=sh*r;sx=(im.naturalWidth-sw)/2}else{sh=sw/r;sy=(im.naturalHeight-sh)*.3}
@@ -370,12 +517,14 @@ function thumbOf(src){return new Promise(ok=>{const im=new Image();im.onload=()=
 
 /* ---------- sigils, drawn by %id-sigil on our ship ---------- */
 function sigUrl(who,fg,bg){return'/apps/id/sigil/'+encodeURIComponent(who)+'?fg='+(fg||'39c8ff')+'&bg='+(bg||'000913')}
-function sig(who,cls){const i=el('img','sig '+(cls||''));i.alt='';i.loading='lazy';i.src=sigUrl(who);i.onerror=()=>i.replaceWith(el('span','sig fb '+(cls||''),who.replace(/^~/,'').slice(0,2).toUpperCase()));return i}
+function sig(who,cls){const i=el('img','sig '+(cls||''));i.alt='';if(!SigOk[who])i.loading='lazy';i.src=sigUrl(who);i.onerror=()=>i.replaceWith(el('span','sig fb '+(cls||''),who.replace(/^~/,'').slice(0,2).toUpperCase()));return i}
 
 /* ---------- the ID, as a document ---------- */
 // mode: owner (tags private lines), viewer (tags lines shared with us), public (a stranger's view)
-function doc(ship,ls,mode,hidden){ls=shown(ls);
- const d=el('div','doc');const band=el('div','band');const bs=el('span','mono',ship);if(hidden)bs.prepend(tag('PARTIAL','part'),' ');add(band,el('span',null,'IDENTIFICATION'),bs);d.appendChild(band);
+// flip: the card can be turned over (your own, on MY ID)
+function doc(ship,ls,mode,hidden,flip){ls=shown(ls);
+ const d=el('div','doc');const band=el('div','band');const bs=el('span','mono',ship);if(hidden)bs.prepend(tag('PARTIAL','part'),' ');
+ if(flip){const r=el('span','bright');add(r,bs,flipBtn('qr',flip));add(band,el('span',null,'IDENTIFICATION'),r)}else add(band,el('span',null,'IDENTIFICATION'),bs);d.appendChild(band);
  const top=el('div','top'),ph=el('div','ph'),p=lineOf(ls,'photo');
  if(p&&IMG.test(p.value)){const i=el('img');i.alt='Photo';i.src=p.value;ph.appendChild(i);if(dotted(p,mode))ph.appendChild(dot(mode))}
  else ph.appendChild(el('span',null,mode==='owner'?'NO PHOTO':'NO PHOTO SHOWN'));
@@ -402,9 +551,16 @@ const Sig={};
 function sigilText(who){if(!Sig[who])Sig[who]=fetch(sigUrl(who,'000000','ffffff'),{credentials:'include'}).then(r=>r.ok?r.text():null).catch(()=>null);return Sig[who]}
 function nest(text,x,y,size){try{const doc=new DOMParser().parseFromString(text,'image/svg+xml');const s=doc.documentElement;if(!s||s.nodeName!=='svg')return'';
  const vb=s.getAttribute('viewBox')||s.getAttribute('viewbox')||'0 0 128 128';s.removeAttribute('viewbox');s.removeAttribute('style');s.setAttribute('viewBox',vb);s.setAttribute('x',x);s.setAttribute('y',y);s.setAttribute('width',size);s.setAttribute('height',size);return new XMLSerializer().serializeToString(s)}catch(e){return''}}
-function qrMatrix(text){let q=qrcode(0,'H');q.addData(text,'Byte');q.make();if(q.getModuleCount()<33){q=qrcode(4,'H');q.addData(text,'Byte');q.make()}
+function qrMatrix(text,mode){let q=qrcode(0,'H');q.addData(text,mode);q.make();if(q.getModuleCount()<33){q=qrcode(4,'H');q.addData(text,mode);q.make()}
  const n=q.getModuleCount(),m=[];for(let r=0;r<n;r++){const row=[];for(let c=0;c<n;c++)row.push(q.isDark(r,c));m.push(row)}return m}
-async function qrSvg(ship){const m=qrMatrix(ship),n=m.length,Q=4,N=n+2*Q;const sg=await sigilText(ship);
+// a live pass in a QR code: IDPASS:SAMPEL-PALNET:0V… in capitals, which QR
+// codes hold compactly. Written without the ~, an older ID scanning it says
+// it isn't an ID card rather than looking the ship up.
+const PASS=/^IDPASS:([A-Z-]+):(0V[0-9A-V]{1,5}(?:\.[0-9A-V]{5})*)$/i;
+const passText=(ship,code)=>('IDPASS:'+ship.replace(/^~/,'')+':'+code).toUpperCase();
+// what a scanned code holds: a live pass {who, code}, or a card {who}
+function readCode(text){const t=String(text||'').trim(),m=PASS.exec(t);if(m){const who=shipIn(m[1]);return who?{who,code:m[2].toLowerCase()}:null}const who=shipIn(t);return who?{who}:null}
+async function qrSvg(ship,text){const m=text?qrMatrix(text,'Alphanumeric'):qrMatrix(ship,'Byte'),n=m.length,Q=4,N=n+2*Q;const sg=await sigilText(ship);
  let hole=Math.round(n*.3);if(hole%2!==n%2)hole++;const h0=(n-hole)/2,inHole=(r,c)=>sg&&r>=h0&&r<h0+hole&&c>=h0&&c<h0+hole;
  let d='';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(m[r][c]&&!inHole(r,c))d+='M'+(c+Q)+' '+(r+Q)+'h1v1h-1z';
  const mid=sg?nest(sg,h0+Q+.6,h0+Q+.6,hole-1.2):'';
@@ -419,54 +575,97 @@ const Scan={on:false,stream:null,timer:null,det:null,cv:null};
 async function startScan(){
  if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){note('The camera only works when this page is opened over https (or on localhost). Use PHOTO OF CARD instead.');return}
  try{Scan.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})}catch(e){note('No camera: '+(e.message||e.name));return}
- const v=$('scanvid');v.srcObject=Scan.stream;$('scan').classList.remove('hidden');$('scanmsg').textContent='POINT THE CAMERA AT AN ID CARD';try{await v.play()}catch(e){}
+ const v=$('scanvid');v.srcObject=Scan.stream;$('scan').classList.remove('hidden');$('scanmsg').textContent='POINT THE CAMERA AT AN ID CARD OR PASS';try{await v.play()}catch(e){}
  Scan.on=true;Scan.det=null;if('BarcodeDetector' in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes('qr_code'))Scan.det=new BarcodeDetector({formats:['qr_code']})}catch(e){}}
  tickScan()}
 async function tickScan(){if(!Scan.on)return;const v=$('scanvid');let text=null;
  if(v.readyState>=2&&v.videoWidth){if(Scan.det){try{const r=await Scan.det.detect(v);if(r.length)text=r[0].rawValue}catch(e){Scan.det=null}}
   else{const w=Math.min(640,v.videoWidth),h=Math.round(v.videoHeight*w/v.videoWidth),c=Scan.cv||(Scan.cv=document.createElement('canvas'));c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,w,h);const r=jsQR(x.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'dontInvert'});if(r)text=r.data}}
- if(text!=null){const p=shipIn(text);if(p){stopScan();openId(p);return}$('scanmsg').textContent='THAT CODE IS NOT AN ID CARD'}
+ if(text!=null){const c=readCode(text);if(c){stopScan();scanned(c);return}$('scanmsg').textContent='THAT CODE IS NOT AN ID CARD OR PASS'}
  if(Scan.on)Scan.timer=setTimeout(tickScan,120)}
 function stopScan(){Scan.on=false;clearTimeout(Scan.timer);if(Scan.stream)for(const t of Scan.stream.getTracks())t.stop();Scan.stream=null;$('scanvid').srcObject=null;$('scan').classList.add('hidden')}
 function readCard(file){if(!file)return;const url=URL.createObjectURL(file);const im=new Image();
  im.onload=()=>{const k=Math.min(1,1400/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.round(im.naturalWidth*k),h=Math.round(im.naturalHeight*k),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);URL.revokeObjectURL(url);
-  const r=jsQR(x.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'attemptBoth'}),p=r&&shipIn(r.data);if(p)openId(p);else note(r?'That code is not an ID card.':'No ID code found in that picture. Try again closer, flat and well lit.')};
+  const r=jsQR(x.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'attemptBoth'}),got=r&&readCode(r.data);if(got)scanned(got);else note(r?'That code is not an ID card or pass.':'No ID code found in that picture. Try again closer, flat and well lit.')};
  im.onerror=()=>{URL.revokeObjectURL(url);note('Could not read that picture.')};im.src=url}
+function scanned(c){if(c.code)redeem(c.who,c.code);else openId(c.who)}
+// check a live pass with the ship that made it
+function redeem(who,code){if(who===S.our){note('That is your own pass.');return}
+ if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';
+ const P=UI.pass={who,code,at:Date.now(),show:null,data:null,why:null};
+ if(!S.book[who])S.book[who]={who,added:Date.now(),asked:null,fresh:false};
+ draw();scrollTo(0,0);act({look:{who}});act({redeem:{who,code,have:haveFor(who)}});
+ setTimeout(()=>{if(UI.pass===P&&!P.data&&!P.why){P.why='off';draw()}},UI.passWaitMs)}
+function closePass(){const P=UI.pass;UI.pass=null;UI.open=null;if(UI.from){UI.tab=UI.from;UI.from=null}
+ // its photo goes too, unless we see it anyway
+ const h=P&&P.data&&P.data.pic&&P.data.pic.hash;if(h&&!Object.values(Seen).some(sn=>['row','full'].some(k=>{const d=sn[k]&&sn[k].data;return d&&d.pic&&d.pic.hash===h})))delete Img[h];
+ draw();scrollTo(0,0)}
 
 /* ---------- actions ---------- */
-function openId(who){who=shipIn(who);if(!who){note('That is not a ship name (an @p, like ~sampel-palnet).');return}
- if(who===S.our){UI.tab='me';UI.open=null;draw();scrollTo(0,0);return}if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';if(!S.book[who])S.book[who]={who,added:Date.now(),asked:null,fresh:false};else S.book[who].fresh=false;draw();scrollTo(0,0);act({look:{who}});fetchId(who,'full')}
+function openId(who){who=shipIn(who);if(!who){note('That is not a ship name (an @p, like ~sampel-palnet).');return}UI.pass=null;
+ if(who===S.our){goMe();return}if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';if(!S.book[who])S.book[who]={who,added:Date.now(),asked:null,fresh:false};else S.book[who].fresh=false;fetchId(who,'full');draw();scrollTo(0,0);act({look:{who}})}
+// MY ID opens on the public side of the card
+function goMe(){UI.tab='me';UI.open=null;UI.pass=null;if(UI.me==='view'){UI.preview='public';UI.flipped=false}draw();scrollTo(0,0)}
 function confirmOr(key,f){if(UI.confirm===key){UI.confirm=null;f();return}UI.confirm=key;draw();setTimeout(()=>{if(UI.confirm===key){UI.confirm=null;draw()}},4000)}
 
 /* ---------- drawing ---------- */
 const TABS=[['me','MY ID'],['look','LOOK UP'],['asks','REQUESTS']];
 function draw(){
  $('ours').textContent=S.our||'';
- const tb=$('tabs');tb.textContent='';for(const[k,n]of TABS){const b=btn(n,()=>{UI.tab=k;if(k==='look')UI.open=null;UI.from=null;UI.confirm=null;draw();scrollTo(0,0)},UI.tab===k?'cur':'');
+ const tb=$('tabs');tb.textContent='';for(const[k,n]of TABS){const b=btn(n,()=>{UI.from=null;UI.confirm=null;UI.pass=null;if(k==='me'){goMe();return}UI.tab=k;if(k==='look')UI.open=null;draw();scrollTo(0,0)},UI.tab===k?'cur':'');
   const c=k==='asks'?S.mine.inbox.length:k==='look'?Object.values(S.book).filter(e=>e.fresh).length:0;if(c)b.appendChild(el('span','badge',String(c)));tb.appendChild(b)}
  const m=$('main');const keep=focusKey();m.textContent='';
+ document.body.classList.toggle('hasbar',S.ready&&UI.tab==='me'&&UI.me==='view');
  if(S.error)m.appendChild(status(S.error,'bad'));
- if(!S.ready){m.appendChild(el('div','boot','CONNECTING TO YOUR SHIP…'));return}
+ if(!S.ready){m.appendChild(loader('ESTABLISHING LINK','CONNECTING TO YOUR SHIP'));return}
+ if(UI.pass&&(UI.tab!=='look'||UI.open!==UI.pass.who))UI.pass=null;
+ const vk=viewKey();if(vk!==UI.vk){UI.vk=vk;UI.gate=gateFor(vk)}
+ if(UI.gate&&gateDone(UI.gate))UI.gate=null;
+ if(UI.gate&&UI.gate.kind==='list'){const g=UI.gate;m.appendChild(loader('ESTABLISHING LINK',UI.tab==='asks'?'FETCHING REQUESTS':'FETCHING IDS',g.want.filter(rowDone).length,g.want.length));return}
  if(UI.tab==='me')mePanel(m);else if(UI.tab==='look')(UI.open?theirPanel(m,UI.open):lookPanel(m));else asksPanel(m);
  if(UI.tab==='asks'||(UI.tab==='look'&&!UI.open))observeRows();
- refocus(keep)}
+ refocus(keep);if(UI.top){UI.top=false;scrollTo(0,0)}}
 // keep the caret where it was when a fact redraws the page
 function focusKey(){const a=document.activeElement;return a&&a.dataset&&a.dataset.k?{k:a.dataset.k,s:a.selectionStart,e:a.selectionEnd}:null}
 function refocus(f){if(!f)return;const x=document.querySelector('[data-k="'+CSS.escape(f.k)+'"]');if(!x)return;x.focus({preventScroll:true});try{if(f.s!=null)x.setSelectionRange(f.s,f.e)}catch(e){}}
 
 /* MY ID */
-function mePanel(m){
- const cols=el('div','cols');const left=el('div','left'),right=el('div');right.id='edcol';add(cols,left,right);m.appendChild(cols);
- const pv=el('div');pv.id='pvcol';left.appendChild(pv);
- const q=sec('CARD CODE');q.classList.add('code');const im=el('img','qr');im.alt='QR code for '+S.our;q.appendChild(im);
- const svgP=UI.qr||(UI.qr=qrSvg(S.our));svgP.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{im.replaceWith(status('Could not draw the code.','bad'))});
- const r=el('div','row');r.style.marginTop='10px';r.style.justifyContent='center';
- add(r,btn('DOWNLOAD SVG',async()=>download(fileBase()+'-qr.svg',new Blob([await svgP],{type:'image/svg+xml'}))),btn('DOWNLOAD PNG',async()=>{try{download(fileBase()+'-qr.png',await qrPng(await svgP,1200))}catch(e){note('Could not make the PNG.')}}));q.appendChild(r);
- q.appendChild(tip('The code holds only your @p ('+S.our+'), with your sigil in the middle. Put it on your card. Whoever scans it sees what you allow, live from your ship, so a lost card gives nothing away.'));
- left.appendChild(q);
+// MY ID shows your card, public side first. Editing is its own screen, so
+// your private lines are never just a scroll away; SHOW ID makes a live pass.
+function mePanel(m){if(UI.me==='edit'){editPanel(m);return}
+ const w=el('div','single');m.appendChild(w);
+ if(UI.dirty)w.appendChild(status('Your ID has changes to check before they are saved. Open EDIT ID.','warn vstat'));
+ const s=sec('YOUR ID');s.id='card';const seg=el('div','seg');seg.id='cardseg';
+ for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;draw()},UI.preview===k?'on':'');b.title=h;b.dataset.k='cv:'+k;seg.appendChild(b)}
+ seg.classList.toggle('gone',UI.flipped);s.querySelector('h3').appendChild(seg);
+ const ls=shown(S.mine.lines),pub=ls.filter(l=>l.pub),fl=el('div','flip'+(UI.flipped?' on':'')),fin=el('div','fin');
+ const t=tip('');const flip=()=>{UI.flipped=!UI.flipped;fl.classList.toggle('on',UI.flipped);seg.classList.toggle('gone',UI.flipped);front.inert=UI.flipped;back.inert=!UI.flipped;t.textContent=cardTip()};
+ const front=UI.preview==='owner'?doc(S.our,ls,'owner',0,flip):doc(S.our,pub,'public',ls.length-pub.length,flip);front.classList.add('side','front');
+ const back=docBack(flip);back.classList.add('side');front.inert=UI.flipped;back.inert=!UI.flipped;
+ add(fin,front,back);fl.appendChild(fin);s.appendChild(fl);t.textContent=cardTip();s.appendChild(t);w.appendChild(s);
+ const ab=el('div','actbar');add(ab,btn('EDIT ID',editMe,'big'),btn('SHOW ID',()=>openShow('public'),'go big'));w.appendChild(ab);
  const h=sec('HOW ID WORKS');h.classList.add('rules','how');
- for(const[b,t]of[['Your ship holds your ID.','Nothing is stored anywhere else.'],['Public lines','are shown to any ship that looks you up.'],['Private lines','stay hidden. A ship can request your ID: accept and it sees everything, including your later changes, until you revoke; deny and it sees only the public lines.'],['Revoking','removes your private lines from their copy, but anything already shown could have been written down.']]){const p=el('p');add(p,el('b',null,b),' '+t);h.appendChild(p)}
- left.appendChild(h);
+ for(const[b,t]of[['Your ship holds your ID.','Nothing is stored anywhere else.'],['Public lines','are shown to any ship that looks you up.'],['Private lines','stay hidden. A ship can request your ID: accept and it sees everything, including your later changes, until you revoke; deny and it sees only the public lines.'],['SHOW ID','proves it’s you. It makes a code that works once, for two minutes: whoever scans it gets your public or whole ID straight from your ship.'],['Revoking','stops them seeing your private lines, but anything already shown could have been written down.']]){const p=el('p');add(p,el('b',null,b),' '+t);h.appendChild(p)}
+ w.appendChild(h)}
+function cardTip(){return UI.flipped?'The back of your card: a code that looks you up.':UI.preview==='owner'?'Your whole ID, as you and the ships you accept see it. Lines with a dot are private.':'Your public ID, as anyone who looks you up sees it.'}
+// the back of the card: a QR code of your @p, to print on a card
+function docBack(flip){const d=el('div','doc back');const band=el('div','band'),right=el('span','bright');add(right,el('span','mono',S.our),flipBtn('card',flip));add(band,el('span',null,'IDENTIFICATION'),right);d.appendChild(band);
+ const b=el('div','bk'),im=el('img','qr');im.alt='QR code for '+S.our;
+ const svgP=UI.qr||(UI.qr=qrSvg(S.our));svgP.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{im.replaceWith(status('Could not draw the code.','bad'))});
+ const r=el('div','row');r.style.justifyContent='center';
+ add(r,btn('DOWNLOAD SVG',async()=>download(fileBase()+'-qr.svg',new Blob([await svgP],{type:'image/svg+xml'}))),btn('DOWNLOAD PNG',async()=>{try{download(fileBase()+'-qr.png',await qrPng(await svgP,1200))}catch(e){note('Could not make the PNG.')}}));
+ add(b,im,el('div','bkship',S.our),el('div','bksub','SCAN TO LOOK UP'),r,tip('Holds only your @p, with your sigil in the middle, to print on your card. Anyone who scans it looks you up. To prove it’s you, use SHOW ID.'));d.appendChild(b);return d}
+// the button that flips the card: a little QR code on the front, a card on the back
+const ICON={qr:'<svg viewBox="0 0 21 21" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2z"/><path d="M9 0h2v2H9zM9 3h2v3H9zM12 9h2v2h-2zM9 8h2v4H9zM15 9h2v2h-2zM19 8h2v3h-2zM9 14h2v2H9zM12 12h3v2h-3zM16 13h2v3h-2zM19 16h2v2h-2zM12 17h2v4h-2zM15 19h3v2h-3zM0 9h2v2H0zM4 8h3v2H4zM9 18h2v3H9z"/></svg>',
+ card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="2" y="5" width="20" height="14"/><rect x="5" y="8.5" width="5" height="6.5"/><path d="M13 9.5h6M13 12.5h6M13 15.5h4"/></svg>'};
+function flipBtn(kind,f){const b=btn('',f,'flipbtn');b.innerHTML=ICON[kind];const t=kind==='qr'?'Flip the card: your look-up code':'Flip the card back';b.title=t;b.setAttribute('aria-label',t);b.dataset.k='flip:'+kind;return b}
+function editMe(){UI.me='edit';UI.preview='owner';UI.edPreview=false;UI.confirm=null;draw();scrollTo(0,0)}
+function leaveEdit(later){UI.me='view';UI.preview='public';UI.flipped=false;UI.confirm=null;UI.edPreview=false;if(later){UI.top=true;return}draw();scrollTo(0,0)}
+function editPanel(m){
+ const top=el('div','edtop'),sure=UI.confirm==='leave';
+ add(top,btn(sure?'SURE? DISCARD':'◀ BACK',()=>{if(!UI.dirty){leaveEdit();return}confirmOr('leave',()=>{UI.dirty=false;UI.pending=null;D=fromLines(S.mine.lines);D.split=false;leaveEdit()})},sure?'red':''),el('span','grow edtitle','EDIT ID'),btn(UI.edPreview?'EDIT':'PREVIEW',()=>{UI.edPreview=!UI.edPreview;draw();scrollTo(0,0)},'pvbtn'));m.appendChild(top);
+ const cols=el('div','cols edit'+(UI.edPreview?' showpv':''));const left=el('div','left'),right=el('div');right.id='edcol';add(cols,left,right);m.appendChild(cols);
+ const pv=el('div');pv.id='pvcol';left.appendChild(pv);
  drawPreview();drawEditor()}
 function drawPreview(){const L=$('pvcol');if(!L)return;L.textContent='';
  const s=sec('PREVIEW');const seg=el('div','seg');for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;drawPreview()},UI.preview===k?'on':'');b.title=h;b.dataset.k='pv:'+k;seg.appendChild(b)}s.querySelector('h3').appendChild(seg);
@@ -531,7 +730,7 @@ function drawEditor(){const R=$('edcol');if(!R)return;const keep=focusKey();R.te
  const sb=el('div','savebar');sb.id='savebar';R.appendChild(sb);drawSaveBar();refocus(keep)}
 function drawSaveBar(){const sb=$('savebar');if(!sb)return;sb.textContent='';sb.className='savebar'+(UI.dirty?' dirty':'');
  const bad=D?D.std.filter(o=>o.bad):[];
- if(UI.pending)add(sb,el('span','grow cyan','SAVING…'));else if(UI.dirty)add(sb,el('span','grow '+(bad.length?'red':'amber'),bad.length?'CHECK: '+bad.map(o=>o.label).join(', '):'UNSAVED CHANGES'),btn('DISCARD',discard,'x'),btn('SAVE',save,'go'));else add(sb,el('span','grow dim','SAVED ON YOUR SHIP'))}
+ if(UI.pending)add(sb,el('span','grow cyan','SAVING…'));else if(UI.dirty)add(sb,el('span','grow '+(bad.length?'red':'amber'),bad.length?'CHECK: '+bad.map(o=>o.label).join(', '):'UNSAVED CHANGES'),btn('DISCARD',discard,'x'),btn('SAVE',()=>save(true),'go'));else add(sb,el('span','grow dim','SAVED ON YOUR SHIP'),btn('DONE',()=>leaveEdit(),'go'))}
 $('photoin').onchange=e=>{const f=e.target.files[0];e.target.value='';setPhoto(f)};
 
 /* LOOK UP */
@@ -543,22 +742,25 @@ function entryInfo(who){const e=S.book[who]||{},sn=Seen[who]||{},f=sn.full||{},r
 function lookPanel(m){
  const s=sec('LOOK UP AN ID');const r=el('div','row');const i=el('input');i.type='text';i.placeholder='~sampel-palnet';i.value=UI.look;i.dataset.k='look';i.autocapitalize='off';i.autocomplete='off';i.spellcheck=false;i.oninput=()=>UI.look=i.value;i.onkeydown=e=>{if(e.key==='Enter')openId(UI.look)};i.classList.add('grow');
  add(r,i,btn('LOOK UP',()=>openId(UI.look),'go'));s.appendChild(r);
- const r2=el('div','row');add(r2,btn('◉ SCAN CARD',startScan),btn('PHOTO OF CARD',()=>$('cardin').click()));s.appendChild(r2);
- s.appendChild(tip('Type a ship name, or scan the code on someone’s ID card. You see their public lines straight away and can ask for the rest.'));m.appendChild(s);
+ const r2=el('div','row');add(r2,btn('◉ SCAN CODE',startScan),btn('PHOTO OF CODE',()=>$('cardin').click()));s.appendChild(r2);
+ s.appendChild(tip('Type a ship name, or scan someone’s ID card or live pass. A card shows their public lines and you can ask for the rest; a pass shows what they chose, checked live with their ship.'));m.appendChild(s);
  const es=Object.values(S.book).sort((a,b)=>(b.fresh-a.fresh)||((b.added||0)-(a.added||0)));
  const b=sec('IDS ON FILE',el('span','dim',String(es.length)));
  if(!es.length)b.appendChild(el('div','empty','NONE YET'));
  for(const e of es){const it=el('div','item');it.dataset.row=e.who;it.onclick=()=>openId(e.who);const d=dataOf(e.who,'row'),nm=d?nameOf(d.lines):null;const mid=el('div');mid.style.minWidth='0';add(mid,el('div','nm',nm||e.who),el('div','sub',nm?e.who:(d?'NO NAME SHOWN':'')));
   const right=el('div','chips');if(e.fresh)right.appendChild(tag('NEW','new'));for(const t of entryInfo(e.who))right.appendChild(t);add(it,face(e.who,'lg'),mid,right);b.appendChild(it)}
  m.appendChild(b)}
-function theirPanel(m,who){const e=S.book[who]||{},f=slot(who,'full'),v=f.data;
+function theirPanel(m,who){if(UI.pass&&UI.pass.who===who){passPanel(m,who);return}const e=S.book[who]||{},f=slot(who,'full'),v=f.data;
  const top=el('div','row');top.style.marginBottom='12px';add(top,btn(UI.from==='asks'?'◀ REQUESTS':'◀ BACK',()=>{UI.open=null;if(UI.from){UI.tab=UI.from;UI.from=null}draw()}),el('span','grow'),btn(UI.confirm==='forget:'+who?'SURE? FORGET':'FORGET',()=>confirmOr('forget:'+who,async()=>{await act({forget:{who}});UI.open=null;draw()}),'red'));m.appendChild(top);
  const cols=el('div','cols');const L=el('div'),R=el('div');add(cols,L,R);m.appendChild(cols);
  const again=()=>btn(f.busy?'TRYING…':'TRY AGAIN',()=>{fetchId(who,'full');draw()});
  if(!v){
+  if(UI.gate&&UI.gate.who===who){m.removeChild(cols);m.appendChild(loader('ESTABLISHING LINK','CONTACTING '+who,0,2));return}
   if(f.noapp){const s=sec('NO ID');s.classList.add('offline');add(s,el('div','partial','NO ID ON '+who),el('div','small dim','The ID app isn’t installed on that ship.'));const r=el('div','row');r.style.marginTop='10px';r.appendChild(again());s.appendChild(r);L.appendChild(s);return}
   if(f.off){const s=sec('NO ANSWER');s.classList.add('offline');add(s,el('div','partial','SHIP OFFLINE OR UNAVAILABLE'),el('div','small dim',who+' didn’t answer. Their ship may be offline, or not running ID right now.'));const r=el('div','row');r.style.marginTop='10px';r.appendChild(again());s.appendChild(r);s.appendChild(tip('If their ship answers later, their ID appears here.'));L.appendChild(s);return}
-  L.appendChild(status('CONTACTING '+who+'…','warn'));L.appendChild(tip('Asking their ship for their ID.'));return}
+  m.removeChild(cols);m.appendChild(loader('ESTABLISHING LINK','CONTACTING '+who,0,2));return}
+ // the photo is on its way: wait for it, so the ID appears whole
+ if(UI.gate&&UI.gate.who===who){m.removeChild(cols);m.appendChild(loader('ESTABLISHING LINK','RECEIVING PHOTO',1,2));return}
  // the ID as fetched, with the photo (or its thumbnail while the photo comes)
  const ls=v.lines.slice(),h=v.pic&&v.pic.hash,im=h&&Img[h];if(v.pic){const src=im&&(im.full||im.thumb);if(src)ls.unshift({key:'photo',label:'PHOTO',value:src,pub:v.pic.pub})}
  L.appendChild(doc(who,ls,'viewer',v.hidden));
@@ -573,9 +775,30 @@ function theirPanel(m,who){const e=S.book[who]||{},f=slot(who,'full'),v=f.data;
  else if(shared)s.appendChild(status(who+' accepted your request: you see their whole ID. They can revoke it at any time.','good'));
  else s.appendChild(status('Nothing private: you see everything they have filled in.'));
  R.appendChild(s)}
+// a live pass we scanned, as its ship answered: shown this once, with the seal
+const PASSFAIL={gone:['PASS NOT VALID',w=>w+'’s ship didn’t make this code, or has ended it. Ask them to show a new pass.'],
+ used:['PASS ALREADY USED',()=>'Another ship scanned this code first. Ask them to show a new pass.'],
+ expired:['PASS EXPIRED',()=>'A pass works for two minutes. Ask them to show a new pass.'],
+ old:['CAN’T CHECK THIS PASS',w=>w+' runs a version of ID without passes, or doesn’t run ID.'],
+ off:['NO ANSWER',w=>w+'’s ship didn’t answer, so the pass can’t be checked. It may be offline.']};
+function clock(ms){const d=new Date(ms);return[d.getHours(),d.getMinutes(),d.getSeconds()].map(pad2).join(':')}
+function passPanel(m,who){const P=UI.pass,v=P.data,h=v&&v.pic&&v.pic.hash;
+ const top=el('div','row');top.style.marginBottom='12px';add(top,btn('◀ BACK',closePass));m.appendChild(top);
+ if(P.why){const[t,x]=PASSFAIL[P.why]||PASSFAIL.gone;const s=sec('LIVE PASS');s.classList.add('offline');add(s,el('div','partial',t),el('div','small dim',x(who)));
+  const r=el('div','row');r.style.marginTop='10px';r.appendChild(btn('LOOK UP THEIR ID',()=>openId(who)));s.appendChild(r);m.appendChild(s);return}
+ if(!v){m.appendChild(loader('VERIFYING','CHECKING THE PASS WITH '+who,0,2));return}
+ if(h&&!imgOk(h,'full')&&Date.now()-v.at<4000){m.appendChild(loader('VERIFYING','RECEIVING PHOTO',1,2));return}
+ const cols=el('div','cols');const L=el('div'),R=el('div');add(cols,L,R);m.appendChild(cols);
+ const seal=el('div','seal');add(seal,el('div','st','✓ LIVE · VERIFIED '+clock(v.at)),el('div','ss',(P.show==='private'?'PRIVATE PASS':'PUBLIC PASS')+' · CHECKED WITH '+who+'’S SHIP'));L.appendChild(seal);
+ const ls=v.lines.slice();if(v.pic){const im=Img[h],src=im&&(im.full||im.thumb);if(src)ls.unshift({key:'photo',label:'PHOTO',value:src,pub:v.pic.pub})}
+ L.appendChild(doc(who,ls,'viewer',v.hidden));
+ L.appendChild(tip('Shown to you once, by '+who+'’s own ship. Not saved: it closes when you leave.'));
+ const s=sec('WHAT THIS PROVES');s.classList.add('rules');
+ for(const[b,t]of[['The code was real.',who+'’s ship made it and answered for it just now. A made-up code can’t pass.'],['They chose to show it.','Whoever showed you this code controls '+who+'.'],['Check the face.','The pass proves the ship, not the person: compare them with the photo.']]){const p=el('p');add(p,el('b',null,b),' '+t);s.appendChild(p)}
+ R.appendChild(s)}
 $('cardin').onchange=e=>{const f=e.target.files[0];e.target.value='';readCard(f)};
 $('scanx').onclick=stopScan;
-addEventListener('keydown',e=>{if(e.key==='Escape'&&Scan.on)stopScan()});
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(Scan.on)stopScan();else if(UI.show)closeShow()});
 
 /* REQUESTS */
 function who2(who,extra){const d=dataOf(who,'row'),known=d?nameOf(d.lines):null;const w=el('div','who');w.dataset.row=who;w.title='Open '+who+'’s ID';w.onclick=()=>openId(who);const nm=el('div');nm.style.minWidth='0';add(nm,el('div','white',known||who),known&&el('div','dim small',who),extra);add(w,face(who,'lg'),nm);return w}
@@ -591,6 +814,37 @@ function asksPanel(m){const s=sec('REQUESTS FOR YOUR ID',el('span','dim',String(
  a.appendChild(tip('Revoking takes your private lines back from their copy, but anything already shown could have been written down.'));m.appendChild(a);
  const bl=S.mine.blocked.slice().sort();if(bl.length){const b=sec('BLOCKED',el('span','dim',String(bl.length)));
   for(const who of bl){const r=el('div','row');r.style.padding='6px 0';add(r,who2(who),btn('UNBLOCK',()=>act({unblock:{who}})));b.appendChild(r)}m.appendChild(b)}}
+
+/* SHOW ID: a live pass */
+// Your ship makes a code that works once, for two minutes. This screen shows
+// it as a QR code and closes when it runs out. Closing it, switching
+// between public and private, or leaving the app ends the code at once.
+const Show={tick:null,qr:null},RING=2*Math.PI*20;
+function openShow(kind){UI.show={kind};S.pass=null;act({show:kind});clearInterval(Show.tick);Show.tick=setInterval(tickShow,250);drawShow()}
+function closeShow(why){if(!UI.show)return;UI.show=null;clearInterval(Show.tick);Show.tick=null;Show.qr=null;S.pass=null;act({hide:null});drawShow();if(why==='expired')note('Your pass ran out.')}
+function againShow(kind){if(!UI.show)return;UI.show.kind=kind;S.pass=null;act({show:kind});drawShow()}
+function curPass(){const p=S.pass;return UI.show&&p&&p.show===UI.show.kind?p:null}
+const mmss=ms=>{const t=Math.ceil(ms/1000);return Math.floor(t/60)+':'+pad2(t%60)};
+function tickShow(){const p=curPass();if(!p)return;const left=p.end-Date.now();if(left<=0){closeShow('expired');return}
+ const r=$('shring');if(r){r.querySelector('.fg').style.strokeDashoffset=String(RING*(1-left/p.total));r.querySelector('span').textContent=mmss(left)}}
+function drawShow(){const o=$('show');o.textContent='';if(!UI.show){o.classList.add('hidden');return}o.classList.remove('hidden');
+ const k=UI.show.kind,p=curPass(),box=el('div','shbox'+(k==='private'?' priv':''));
+ const hd=el('div','shhead');add(hd,el('span','t','SHOW ID'),p&&!p.used&&el('span','live','LIVE'),btn('✕ CLOSE',()=>closeShow(),'x'));box.appendChild(hd);
+ const seg=el('div','seg');for(const[v,n,h]of[['public','PUBLIC','A pass that shows your public lines'],['private','PRIVATE','A pass that shows your whole ID']]){const b=btn(n,()=>{if(v!==k)againShow(v)},k===v?'on':'');b.title=h;b.dataset.k='sh:'+v;seg.appendChild(b)}box.appendChild(seg);
+ if(!p)box.appendChild(loader('ISSUING PASS','ASKING YOUR SHIP FOR A CODE'));
+ else if(p.used){const w=el('div','shown'),who=el('div','who');add(who,sig(p.used,'lg'),el('div','white mono',p.used));
+  add(w,el('div','big','✓ SHOWN TO'),who,el('div','small dim',(k==='private'?'Your whole ID':'Your public ID')+' was sent to '+p.used+' by your ship. If that isn’t the person in front of you, they didn’t see it: someone else did.'));
+  const r=el('div','row');r.style.justifyContent='center';add(r,btn('SHOW AGAIN',()=>againShow(k)),btn('DONE',()=>closeShow(),'go'));w.appendChild(r);box.appendChild(w)}
+ else{if(!Show.qr||Show.qr.code!==p.code)Show.qr={code:p.code,svg:qrSvg(S.our,passText(S.our,p.code))};
+  const q=el('div','shqr'),im=el('img');im.alt='Live pass for '+S.our;q.appendChild(im);Show.qr.svg.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{q.replaceWith(status('Could not draw the code.','bad'))});box.appendChild(q);
+  const meta=el('div','shmeta'),g=el('div','grow');add(g,el('div','shkind',k==='private'?'PRIVATE PASS · YOUR WHOLE ID':'PUBLIC PASS · YOUR PUBLIC LINES'),el('div','shship',S.our));
+  const ring=el('div','ring');ring.id='shring';ring.innerHTML='<svg viewBox="0 0 46 46" aria-hidden="true"><circle class="bg" cx="23" cy="23" r="20"/><circle class="fg" cx="23" cy="23" r="20"/></svg><span></span>';ring.querySelector('.fg').style.strokeDasharray=String(RING);
+  add(meta,g,ring);box.appendChild(meta);
+  box.appendChild(tip('They scan it in ID: LOOK UP, then SCAN CODE. It works once, for two minutes, and proves it’s you: their ship checks it with yours.'))}
+ o.appendChild(box);tickShow()}
+addEventListener('pagehide',()=>{if(!UI.show||!Chan.url||!Chan.ship)return;
+ // the page is going: end the pass now (it would run out by itself anyway)
+ try{fetch(Chan.url,{method:'PUT',keepalive:true,credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify([{id:++Chan.id,action:'poke',ship:Chan.ship,app:'id',mark:'id-action',json:{hide:null}}])})}catch(e){}});
 
 function note(text){const n=$('notes');const d=el('div','note',text);n.appendChild(d);setTimeout(()=>d.remove(),6500)}
 addEventListener('beforeunload',e=>{if(UI.dirty){e.preventDefault();e.returnValue=''}});

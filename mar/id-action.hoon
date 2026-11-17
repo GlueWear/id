@@ -29,6 +29,9 @@
         [%decline (ot ~[who+(se %p)])]
         [%block (ot ~[who+(se %p)])]
         [%unblock (ot ~[who+(se %p)])]
+        [%show (cu |=(t=@t ;;(show:id t)) so)]
+        [%hide ul]
+        [%redeem (ot ~[who+(se %p) code+(se %uv) have+(se %uv)])]
     ==
   --
 ++  grow

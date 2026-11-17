@@ -35,6 +35,23 @@
 +$  news
   $%  [%lines lines=(list line) hidden=@ud =ask pic=(unit [hash=@uv pub=?])]
       [%pic =pic]
+      [%live =show]                       ::  a live pass: what follows it shows
+      [%nope why=?(%gone %used %expired)] ::  a live pass that doesn't work
+  ==
+::
+::  a live pass: the QR code SHOW ID puts on the screen.  It holds our @p
+::  and code, a random number our ship just made.  A ship that scans it
+::  watches /pass/~itself/<code>/<photo it has>; we answer once, with our
+::  public lines or the whole ID, and the code is used up.  Anyone can
+::  make up a code; only ours works, and only we can answer for our @p.
+::  One pass at a time, for two minutes.
+::
++$  show  ?(%public %private)
++$  pass
+  $:  code=@uv
+      =show
+      until=@da                           ::  dead after this
+      used=(unit @p)                      ::  scanned by
   ==
 ::
 ::  a ship we have looked up.  Its ID is never kept, only fetched.
@@ -60,6 +77,9 @@
       [%decline who=@p]
       [%block who=@p]
       [%unblock who=@p]
+      [%show =show]                       ::  make a live pass
+      [%hide ~]                           ::  end it
+      [%redeem who=@p code=@uv have=@uv]  ::  check a pass we scanned
   ==
 ::
 ::  ship to ship

@@ -13,24 +13,39 @@
 ::
 ::  Nothing here can stop someone writing down what they were shown.
 ::
+::  SHOW ID makes a live pass (see sur/id): a QR code holding our @p and a
+::  random code, good once, for two minutes.  The ship that scans it asks
+::  us; only we can answer for our @p, so the answer proves that whoever
+::  showed the code controls this ship and chose to show it, just now.
+::
 ::  Ships still running the first version watch /view/~itself and are sent
 ::  their whole view on every change, as they expect.
 ::
 /-  *id
 /+  default-agent, dbug, server
 |%
-+$  state-2
-  $:  %2
++$  state-3
+  $:  %3
       lines=(list line)                  ::  our ID
       allowed=(set @p)                   ::  ships that see all of it
       inbox=(map @p [note=@t when=@da])  ::  requests waiting on us
       declined=(set @p)                  ::  requests we turned down
       blocked=(set @p)
       book=(map @p entry)                ::  ships we have looked up
+      live=(unit pass)                   ::  our live pass, if any
   ==
-::  earlier states.  They kept a copy of every ID looked up; the upgrade
-::  throws the copies away.
+::  earlier states.  The first two kept a copy of every ID looked up; the
+::  upgrade throws the copies away.
 ::
++$  state-2
+  $:  %2
+      lines=(list line)
+      allowed=(set @p)
+      inbox=(map @p [note=@t when=@da])
+      declined=(set @p)
+      blocked=(set @p)
+      book=(map @p entry)
+  ==
 +$  entry-0  [view=(unit view) got=(unit @da) asked=(unit @da) gone=? fresh=?]
 +$  state-1
   $:  %1
@@ -50,7 +65,7 @@
       blocked=(set @p)
       book=(map @p entry-0)
   ==
-+$  versioned  $%(state-0 state-1 state-2)
++$  versioned  $%(state-0 state-1 state-2 state-3)
 +$  card  card:agent:gall
 ::
 ++  max-lines  40
@@ -62,6 +77,7 @@
 ++  max-note  280
 ++  max-inbox  200
 ++  max-book  2.000
+++  pass-life  ~m2
 ::
 ++  claim
   ^-  card
@@ -127,50 +143,63 @@
 ++  names  (silt `(list @ta)`~['first' 'last' 'preferred' 'name'])
 ::
 ++  sees
-  |=  [st=state-2 who=@p]
+  |=  [st=state-3 who=@p]
   ^-  ?
   &((~(has in allowed.st) who) !(~(has in blocked.st) who))
 ::
 ++  ask-for
-  |=  [st=state-2 who=@p]
+  |=  [st=state-3 who=@p]
   ^-  ask
   ?:  (~(has by inbox.st) who)  %wait
   ?:  (~(has in declined.st) who)  %no
   %none
 ::
-::  what ship who may see of our ID (the thumbnail aside)
+::  what ship who may see of our ID (the thumbnail aside): all of it, or
+::  the public lines
 ::
 ++  view-for
-  |=  [st=state-2 who=@p]
+  |=  [st=state-3 who=@p]
   ^-  view
-  =/  all=?  (sees st who)
+  (view-as st who (sees st who))
+::
+++  view-as
+  |=  [st=state-3 who=@p all=?]
+  ^-  view
   =/  ls=(list line)  (skip lines.st |=(l=line =('thumb' key.l)))
   =/  vis=(list line)  (skim ls |=(l=line |(all pub.l)))
   [vis (sub (lent ls) (lent vis)) (ask-for st who)]
 ::
-::  the photo, if who may see it
+::  the photo, if it is public or all may be seen
 ::
-++  pic-for
-  |=  [st=state-2 who=@p]
+++  pic-as
+  |=  [st=state-3 all=?]
   ^-  (unit [hash=@uv pub=?])
   =/  p  (find-line lines.st 'photo')
   ?~  p  ~
-  ?.  |(pub.u.p (sees st who))  ~
+  ?.  |(pub.u.p all)  ~
   `[(sham value.u.p) pub.u.p]
 ::
 ::  our answer when who fetches our ID (then it is kicked)
 ::
 ++  answer
-  |=  [st=state-2 who=@p =mode have=@uv]
+  |=  [st=state-3 who=@p =mode have=@uv]
   ^-  (list card)
-  =/  v  (view-for st who)
+  (answer-as st who mode have (sees st who))
+::
+::  the same, showing all of it or the public lines: a fetch shows what
+::  who may see; a live pass shows what we chose
+::
+++  answer-as
+  |=  [st=state-3 who=@p =mode have=@uv all=?]
+  ^-  (list card)
+  =/  v  (view-as st who all)
   =/  ls=(list line)
     %+  skip  lines.v
     |=  l=line
     ?|  =('photo' key.l)
         &(?=(%row mode) !(~(has in names) key.l))
     ==
-  =/  pf  (pic-for st who)
+  =/  pf  (pic-as st all)
   =/  give  |=(n=news `card`[%give %fact ~ %id-news !>(n)])
   :-  (give [%lines ls hidden.v ask.v pf])
   =/  p  (find-line lines.st 'photo')
@@ -197,14 +226,14 @@
   (slaw %p i.t.path)
 ::
 ++  give-view
-  |=  [st=state-2 who=@p]
+  |=  [st=state-3 who=@p]
   ^-  card
   [%give %fact ~[/view/(scot %p who)] %id-view !>((view-for st who))]
 ::
 ::  after a change to our ID: our page, and first-version watchers
 ::
 ++  publish
-  |=  [=bowl:gall st=state-2]
+  |=  [=bowl:gall st=state-3]
   ^-  (list card)
   :-  (ui-mine st)
   %+  turn  ~(tap in (viewers bowl))
@@ -214,7 +243,7 @@
 ::  watcher's view, and a nudge to fetch again
 ::
 ++  tell
-  |=  [st=state-2 who=@p]
+  |=  [st=state-3 who=@p]
   ^-  (list card)
   :~  (ui-mine st)
       (give-view st who)
@@ -290,7 +319,7 @@
   ==
 ::
 ++  mine-json
-  |=  st=state-2
+  |=  st=state-3
   ^-  json
   %-  pairs:enjs:format
   :~  ['lines' a+(turn lines.st line-json)]
@@ -311,7 +340,7 @@
 ::  a fetched ID, passed straight to our page and not kept
 ::
 ++  ui-news
-  |=  [who=@p =mode n=news]
+  |=  [who=@p mode=@tas n=news]
   ^-  card
   %-  ui
   ?-    -.n
@@ -336,7 +365,35 @@
         ['full' s+full.pic.n]
         ['thumb' s+thumb.pic.n]
     ==
+  ::
+      %live
+    %+  frond:enjs:format  'live'
+    (pairs:enjs:format ~[['who' s+(scot %p who)] ['show' s+show.n]])
+  ::
+      %nope
+    %+  frond:enjs:format  'passfail'
+    (pairs:enjs:format ~[['who' s+(scot %p who)] ['why' s+why.n]])
   ==
+::
+::  our live pass, for our page: the code, what it shows, how long it has
+::  left and who scanned it.  A dead one is null.
+::
+++  pass-json
+  |=  [now=@da p=(unit pass)]
+  ^-  json
+  ?~  p  ~
+  ?:  (gte now until.u.p)  ~
+  %-  pairs:enjs:format
+  :~  ['code' s+(scot %uv code.u.p)]
+      ['show' s+show.u.p]
+      ['left' (numb:enjs:format (div (sub until.u.p now) (div ~s1 1.000)))]
+      ['used' ?~(used.u.p ~ s+(scot %p u.used.u.p))]
+  ==
+::
+++  ui-pass
+  |=  [now=@da p=(unit pass)]
+  ^-  card
+  (ui (frond:enjs:format 'pass' (pass-json now p)))
 ::
 ++  ui-who
   |=  [key=@t who=@p =mode]
@@ -349,7 +406,7 @@
   [%give %fact ~[/ui] %json !>(jon)]
 ::
 ++  ui-mine
-  |=  st=state-2
+  |=  st=state-3
   ^-  card
   (ui (frond:enjs:format 'mine' (mine-json st)))
 ::
@@ -399,7 +456,11 @@
     |=  =path
     ^-  (quip card agent:gall)
     =^  cards  inner  (on-watch:ag path)
-    [?.(?=([%ui ~] path) cards (weld cards (tell inner bowl ~))) this]
+    :_  this
+    ?+  path  cards
+      [%ui ~]     (weld cards (tell inner bowl ~))
+      [%pass *]   (weld cards (tell inner bowl ~[/ui]))
+    ==
   ++  on-leave
     |=  =path
     ^-  (quip card agent:gall)
@@ -426,7 +487,7 @@
 ::
 %-  stamped
 %-  agent:dbug
-=|  state-2
+=|  state-3
 =*  state  -
 ^-  agent:gall
 |_  =bowl:gall
@@ -453,13 +514,14 @@
     (~(run by b) |=(e=entry-0 `entry`[(fall got.e now.bowl) asked.e fresh.e (fall got.e now.bowl)]))
   =.  state
     ?-  -.o
-      %2  o
-      %1  [%2 lines.o allowed.o inbox.o declined.o blocked.o (up book.o)]
-      %0  [%2 lines.o ~(key by grants.o) inbox.o declined.o blocked.o (up book.o)]
+      %3  o
+      %2  [%3 lines.o allowed.o inbox.o declined.o blocked.o book.o ~]
+      %1  [%3 lines.o allowed.o inbox.o declined.o blocked.o (up book.o) ~]
+      %0  [%3 lines.o ~(key by grants.o) inbox.o declined.o blocked.o (up book.o) ~]
     ==
   :_  this
   :-  claim
-  ?:  ?=(%2 -.o)  ~
+  ?:  ?=(?(%2 %3) -.o)  ~
   ::  the first versions kept a standing subscription to every ID looked
   ::  up: leave them
   %+  murn  ~(tap by wex.bowl)
@@ -564,6 +626,31 @@
       =.  declined  (~(del in declined) who.act)
       ?:  told  [(tell state who.act) this]
       [~[(ui-mine state) (give-view state who.act)] this]
+    ::
+        %show
+      ::  a new pass ends the last one.  The code is 128 random bits.
+      =.  live  `[`@uv`(end [3 16] eny.bowl) show.act (add now.bowl pass-life) ~]
+      [~[(ui-pass now.bowl live)] this]
+    ::
+        %hide
+      =.  live  ~
+      [~[(ui-pass now.bowl live)] this]
+    ::
+        %redeem
+      ?:  =(who.act our.bowl)  `this
+      ::  one check at a time with each ship
+      =/  old=(list card)
+        %+  murn  ~(tap by wex.bowl)
+        |=  [[w=wire s=@p d=term] *]
+        ^-  (unit card)
+        ?.  &(=(s who.act) =(d %id) ?=([%pass @ @ ~] w))  ~
+        `[%pass w %agent [s %id] %leave ~]
+      :_  this
+      %+  snoc  old
+      :*  %pass  ~[%pass (scot %p who.act) (scot %da now.bowl)]
+          %agent  [who.act %id]
+          %watch  ~[%pass (scot %p our.bowl) (scot %uv code.act) (scot %uv have.act)]
+      ==
     ==
   ::
       %id-msg
@@ -631,6 +718,7 @@
         %-  pairs:enjs:format
         :~  ['our' s+(scot %p our.bowl)]
             ['mine' (mine-json state)]
+            ['pass' (pass-json now.bowl live)]
             :-  'book'
             :-  %a
             %+  turn  ~(tap by book)
@@ -647,6 +735,35 @@
     =/  have=@uv  (slav %uv i.t.t.t.path)
     :_  this
     (snoc (answer state who mode have) [%give %kick ~ ~])
+  ::
+  ::  a ship that scanned our live pass: once, then kicked.  A code that
+  ::  isn't ours, or a blocked ship, gets %gone and the pass stays unused.
+  ::  The ship that used it may ask again (its first answer may be lost).
+  ::
+      [%pass @ @ @ ~]
+    =/  who=@p  (slav %p i.t.path)
+    ?>  =(src.bowl who)
+    =/  code=@uv  (slav %uv i.t.t.path)
+    =/  have=@uv  (slav %uv i.t.t.t.path)
+    =/  give  |=(n=news `card`[%give %fact ~ %id-news !>(n)])
+    =/  kick=card  [%give %kick ~ ~]
+    =/  why=(unit ?(%gone %used %expired))
+      ?~  live  `%gone
+      ?.  =(code code.u.live)  `%gone
+      ?:  (~(has in blocked) who)  `%gone
+      ?:  (gte now.bowl until.u.live)  `%expired
+      ?:  &(?=(^ used.u.live) !=(who u.used.u.live))  `%used
+      ~
+    ?^  why  [~[(give [%nope u.why]) kick] this]
+    ?>  ?=(^ live)
+    =/  =show  show.u.live
+    =.  live  `u.live(used `who)
+    :_  this
+    ;:  weld
+      ~[(give [%live show])]
+      (answer-as state who %full have ?=(%private show))
+      ~[kick (ui-pass now.bowl live)]
+    ==
   ::
   ::  a ship running the first version
   ::
@@ -665,7 +782,7 @@
   ::  a hash of everything the page shows (see +stamped)
   ::
       [%x %stamp ~]
-    ``json+!>(`json`s+(scot %uv (sham [lines allowed inbox declined blocked book])))
+    ``json+!>(`json`s+(scot %uv (sham [lines allowed inbox declined blocked book live])))
   ==
 ::
 ++  on-agent
@@ -702,6 +819,7 @@
       =/  n  (mole |.(!<(news q.cage.sign)))
       ?~  n  `this
       ?-    -.u.n
+          ?(%live %nope)  `this
           %pic
         ?.  (good-pic pic.u.n)  `this
         [~[(ui-news who mode u.n)] this]
@@ -741,6 +859,33 @@
         ~[(ui-news who mode [%lines ls hidden.u.v ask.u.v ph])]
         ?~(p ~ ~[(ui-news who mode [%pic (sham value.u.p) value.u.p ''])])
         ~[leave]
+      ==
+    ==
+  ::
+  ::  a live pass we scanned: their ship's answer, passed to our page and
+  ::  not kept.  A ship that refuses the watch runs an ID without passes.
+  ::
+      [%pass @ @ ~]
+    =/  who=@p  (slav %p i.t.wire)
+    ?+    -.sign  `this
+        %watch-ack
+      ?~  p.sign  `this
+      =/  why=json  (pairs:enjs:format ~[['who' s+(scot %p who)] ['why' s+'old']])
+      [~[(ui (frond:enjs:format 'passfail' why))] this]
+    ::
+        %fact
+      ?.  =(%id-news p.cage.sign)  `this
+      =/  n  (mole |.(!<(news q.cage.sign)))
+      ?~  n  `this
+      ?-    -.u.n
+          ?(%live %nope)  [~[(ui-news who %pass u.n)] this]
+          %pic
+        ?.  (good-pic pic.u.n)  `this
+        [~[(ui-news who %pass u.n)] this]
+      ::
+          %lines
+        ?.  (good-lines 2 lines.u.n)  `this
+        [~[(ui-news who %pass u.n)] this]
       ==
     ==
   ::

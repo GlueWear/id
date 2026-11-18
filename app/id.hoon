@@ -17,6 +17,7 @@
 ::  random code, good once, for two minutes.  The ship that scans it asks
 ::  us; only we can answer for our @p, so the answer proves that whoever
 ::  showed the code controls this ship and chose to show it, just now.
+::  A private pass also accepts the ship that scans it, until revoked.
 ::
 ::  Ships still running the first version watch /view/~itself and are sent
 ::  their whole view on every change, as they expect.
@@ -186,8 +187,8 @@
   ^-  (list card)
   (answer-as st who mode have (sees st who))
 ::
-::  the same, showing all of it or the public lines: a fetch shows what
-::  who may see; a live pass shows what we chose
+::  the same, showing all of it or the public lines (a fetch, or a live
+::  pass, shows what who may see)
 ::
 ++  answer-as
   |=  [st=state-3 who=@p =mode have=@uv all=?]
@@ -758,11 +759,21 @@
     ?>  ?=(^ live)
     =/  =show  show.u.live
     =.  live  `u.live(used `who)
+    ::  a private pass is an accept: from now on who sees our whole ID,
+    ::  until we revoke, just as if we had accepted its request.  Either
+    ::  pass shows who all it may see, so a ship already accepted gets the
+    ::  whole ID from a public pass too.
+    =/  priv=?  ?=(%private show)
+    =?  allowed   priv  (~(put in allowed) who)
+    =?  inbox     priv  (~(del by inbox) who)
+    =?  declined  priv  (~(del in declined) who)
     :_  this
     ;:  weld
       ~[(give [%live show])]
-      (answer-as state who %full have ?=(%private show))
+      (answer-as state who %full have (sees state who))
       ~[kick (ui-pass now.bowl live)]
+      ?.  priv  ~
+      ~[(ui-mine state) (give-view state who)]
     ==
   ::
   ::  a ship running the first version

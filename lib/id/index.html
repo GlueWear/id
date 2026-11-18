@@ -193,6 +193,7 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
 @keyframes fadein{from{opacity:0}}
 /* MY ID: the card, which flips over to the look-up code on its back */
 .single{max-width:560px;margin:0 auto}
+.stack>div+div:not(:empty){margin-top:12px}
 .flipbtn{width:36px;height:36px;padding:0;border:1px solid var(--c);background:#000913;color:var(--c);display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 12px rgba(57,200,255,.35)}
 .flipbtn svg{width:24px;height:24px;display:block}
 .flipbtn:hover:not(:disabled){background:var(--p2);color:var(--w)}
@@ -251,9 +252,6 @@ body.hasbar main{flex:1;min-height:0;width:100%;display:flex;flex-direction:colu
 .shbox.priv{border-color:var(--a);box-shadow:0 0 40px rgba(255,176,32,.15)}
 .shhead{display:flex;align-items:center;gap:10px}
 .shhead .t{flex:1;color:var(--w);letter-spacing:.34em;font-size:13px}
-.shhead .live{color:var(--r);font-size:10px;letter-spacing:.24em}
-.shhead .live:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--r);box-shadow:0 0 8px var(--r);margin-right:6px;vertical-align:0;animation:lblink 1.2s steps(2) infinite}
-@media (prefers-reduced-motion:reduce){.shhead .live:before{animation:none}}
 .shbox .seg{display:flex}.shbox .seg button{flex:1;padding:10px;font-size:12px;letter-spacing:.14em}
 .shbox.priv .seg{border-color:var(--a)}.shbox.priv .seg button.on{background:var(--a);color:#1a1000}
 .shqr{background:#fff;padding:10px;align-self:center;width:min(100%,330px)}
@@ -272,8 +270,9 @@ body.hasbar main{flex:1;min-height:0;width:100%;display:flex;flex-direction:colu
 .shbox .loader{min-height:250px;padding:10px}
 .shown{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 4px;text-align:center}
 .shown .big{color:var(--w);letter-spacing:.3em;font-size:13px}
-.shown .who{flex:none;max-width:100%;cursor:default}
-.shown .who .mono{min-width:0;overflow-wrap:break-word}
+.shown .whobtn{display:flex;align-items:center;gap:10px;max-width:100%;padding:6px;border:0;text-transform:none;letter-spacing:.06em;text-align:left}
+.shown .whobtn:hover:not(:disabled){background:transparent}.shown .whobtn:hover .mono{text-decoration:underline}
+.shown .whobtn .mono{min-width:0;overflow-wrap:break-word}
 /* a pass we scanned, checked live with its ship */
 .seal{background:#eef4f7;color:#001424;padding:10px 12px;margin-bottom:10px;border:3px double #001424;outline:1px solid #eef4f7}
 .seal .st{font-weight:900;letter-spacing:.1em;font-size:13px}
@@ -478,7 +477,9 @@ function took(g){quiet(g.who,false);const s=slot(g.who,g.mode);s.data={lines:g.l
  const sn=Seen[g.who];if(sn.announce&&g.mode==='full'){sn.announce=false;const v=s.data;if(v.ask==='no')note(g.who+' denied your request.');else if(!v.hidden&&v.lines.some(l=>l.pub===false))note(g.who+' accepted your request: you see their whole ID.')}}
 // a pass we scanned: what it showed is held for this one view only, apart
 // from what we fetch, and dropped when we leave it
-function tookPass(g){quiet(g.who,false);const P=UI.pass;if(!P||P.who!==g.who||P.why||P.data)return;P.data={lines:g.lines,hidden:g.hidden,ask:g.ask,pic:g.pic,at:Date.now()};
+function tookPass(g){quiet(g.who,false);const P=UI.pass;
+ // what we held of them is out of date: a private pass has just accepted us
+ const sn=Seen[g.who];if(sn)for(const m of['row','full'])if(sn[m]&&sn[m].data)sn[m].data.at=0;if(!P||P.who!==g.who||P.why||P.data)return;P.data={lines:g.lines,hidden:g.hidden,ask:g.ask,pic:g.pic,at:Date.now()};
  const h=g.pic&&g.pic.hash;if(h&&!imgOk(h,'full'))setTimeout(()=>{if(UI.pass===P)draw()},4100)}
 // our own live pass, as our ship tells it: the time left counts from now
 function setPass(p){const was=S.pass,left=p&&+p.left||0;S.pass=p&&p.code?{code:p.code,show:p.show,used:p.used||null,end:Date.now()+left,total:was&&was.code===p.code?was.total:left}:null;drawShow()}
@@ -809,9 +810,10 @@ function lookPanel(m){
  for(const e of es){const it=el('div','item');it.dataset.row=e.who;it.onclick=()=>openId(e.who);const d=dataOf(e.who,'row'),nm=d?nameOf(d.lines):null;const mid=el('div');mid.style.minWidth='0';add(mid,el('div','nm'+(nm?'':' pat'),nm||e.who),el('div','sub'+(nm?' pat':''),nm?e.who:(d?'NO NAME SHOWN':'')));
   const right=el('div','chips');if(e.fresh)right.appendChild(tag('NEW','new'));for(const t of entryInfo(e.who))right.appendChild(t);add(it,face(e.who,'lg'),mid,right);b.appendChild(it)}
  m.appendChild(b)}
-function theirPanel(m,who){if(UI.pass&&UI.pass.who===who){passPanel(m,who);return}const e=S.book[who]||{},f=slot(who,'full'),v=f.data;
+// one centered column, as on a phone: the ID, then what you may see of it
+function theirPanel(m0,who){if(UI.pass&&UI.pass.who===who){passPanel(m0,who);return}const e=S.book[who]||{},f=slot(who,'full'),v=f.data,m=el('div','single');m0.appendChild(m);
  const top=el('div','row');top.style.marginBottom='12px';add(top,btn(UI.from==='asks'?'◀ REQUESTS':'◀ BACK',()=>{UI.open=null;if(UI.from){UI.tab=UI.from;UI.from=null}draw()}),el('span','grow'),btn(UI.confirm==='forget:'+who?'SURE? FORGET':'FORGET',()=>confirmOr('forget:'+who,async()=>{await act({forget:{who}});UI.open=null;draw()}),'red'));m.appendChild(top);
- const cols=el('div','cols');const L=el('div'),R=el('div');add(cols,L,R);m.appendChild(cols);
+ const cols=el('div','stack');const L=el('div'),R=el('div');add(cols,L,R);m.appendChild(cols);
  const again=()=>btn(f.busy?'TRYING…':'TRY AGAIN',()=>{fetchId(who,'full');draw()});
  if(!v){
   if(UI.gate&&UI.gate.who===who){m.removeChild(cols);m.appendChild(loader('ESTABLISHING LINK','CONTACTING '+who,0,2));return}
@@ -883,10 +885,11 @@ function tickShow(){const p=curPass();if(!p)return;const left=p.end-Date.now();i
  const r=$('shring');if(r){r.querySelector('.fg').style.strokeDashoffset=String(RING*(1-left/p.total));r.querySelector('span').textContent=mmss(left)}}
 function drawShow(){const o=$('show');o.textContent='';if(!UI.show){o.classList.add('hidden');return}o.classList.remove('hidden');
  const k=UI.show.kind,p=curPass(),box=el('div','shbox'+(k==='private'?' priv':''));
- const hd=el('div','shhead');add(hd,el('span','t','SHOW ID'),p&&!p.used&&el('span','live','LIVE'),btn('✕ CLOSE',()=>closeShow(),'x'));box.appendChild(hd);
- const seg=el('div','seg');for(const[v,n,h]of[['public','PUBLIC','A pass that shows your public lines'],['private','PRIVATE','A pass that shows your whole ID']]){const b=btn(n,()=>{if(v!==k)againShow(v)},k===v?'on':'');b.title=h;b.dataset.k='sh:'+v;seg.appendChild(b)}box.appendChild(seg);
+ const hd=el('div','shhead');add(hd,el('span','t','SHOW ID'),btn('✕ CLOSE',()=>closeShow(),'x'));box.appendChild(hd);
+ const seg=el('div','seg');for(const[v,n,h]of[['public','PUBLIC','A pass that shows your public lines'],['private','PRIVATE','A pass that shows your whole ID and accepts whoever scans it']]){const b=btn(n,()=>{if(v!==k)againShow(v)},k===v?'on':'');b.title=h;b.dataset.k='sh:'+v;seg.appendChild(b)}box.appendChild(seg);
  if(!p)box.appendChild(loader('ISSUING PASS','ASKING YOUR SHIP FOR A CODE'));
- else if(p.used){const w=el('div','shown'),who=el('div','who');add(who,sig(p.used,'lg'),el('div','white mono pat',p.used));
+ // who scanned it: tap them to open their ID (the pass is used up, so this screen closes)
+ else if(p.used){const w=el('div','shown'),u=p.used,who=btn('',()=>{closeShow();openId(u)},'whobtn');who.title='Open '+u+'’s ID';add(who,sig(u,'lg'),el('span','white mono pat',u));
   add(w,el('div','big','✓ SCANNED BY'),who);
   const r=el('div','row');r.style.justifyContent='center';add(r,btn('SHOW AGAIN',()=>againShow(k)),btn('DONE',()=>closeShow(),'go'));w.appendChild(r);box.appendChild(w)}
  else{if(!Show.qr||Show.qr.code!==p.code)Show.qr={code:p.code,svg:qrSvg(S.our,passText(S.our,p.code))};
@@ -900,7 +903,7 @@ addEventListener('pagehide',()=>{if(!UI.show||!Chan.url||!Chan.ship)return;
  try{fetch(Chan.url,{method:'PUT',keepalive:true,credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify([{id:++Chan.id,action:'poke',ship:Chan.ship,app:'id',mark:'id-action',json:{hide:null}}])})}catch(e){}});
 
 /* the menu, behind the icon: who you are, and how ID works */
-const VERSION="0.3.2";// written in by build.mjs from desk.docket-0
+const VERSION="0.4.0";// written in by build.mjs from desk.docket-0
 const HOW=[
  ['YOUR ID',[
   'Your ID is kept on your ship and nowhere else.',
@@ -917,12 +920,14 @@ const HOW=[
   'Revoking stops them seeing your private lines from then on. It can’t erase what they’ve already seen.']],
  ['SHOW ID: PROVING IT’S YOU',[
   'SHOW ID makes a QR code that works once, for 2 minutes.',
-  'Public shows your public lines. Private shows your whole ID.',
+  'Public shows your public lines, or your whole ID to ships you’ve accepted.',
+  'Private shows your whole ID and accepts whoever scans it, as if they’d asked. They keep seeing it until you revoke.',
   'The other person scans it in LOOK UP. Their ship checks it with yours, so a fake code fails.',
   'Closing the screen ends the code.',
   'Your screen then shows who scanned it.']],
  ['CHECKING SOMEONE’S PASS',[
-  '✓ VERIFIED means their ship made the code just now.']],
+  '✓ VERIFIED means their ship made the code just now.',
+  'A private pass gives you their whole ID from then on, until they revoke.']],
  ['YOUR CARD CODE',[
   'The QR on the back of your card holds only your @p.',
   'Scanning it does the same as typing your @p into LOOK UP.',

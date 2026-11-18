@@ -56,18 +56,23 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
   version you are running.
 
 **Show ID**
-- **SHOW ID** opens on a **public** pass, a QR code of your public lines.
-  Choose **PRIVATE** for a pass of your whole ID.
+- **SHOW ID** opens on a **public** pass, a QR code of your public lines
+  (or of your whole ID, for a ship you have already accepted).
+- Choose **PRIVATE** for a pass of your whole ID. Letting someone scan it is
+  the same as accepting their request: they keep seeing your whole ID,
+  including later changes, until you revoke. They are listed under **Requests**
+  with **Revoke**.
 - Your ship makes a new random code for each pass. It works once, for two
-  minutes. When it is scanned your screen shows which ship scanned it. If that
-  isn't the person in front of you, someone else got it first: show a new one.
+  minutes. When it is scanned your screen shows which ship scanned it; tap it
+  to open their ID. If that isn't the person in front of you, someone else got
+  it first: show a new one, and revoke the ship that scanned a private pass.
 - Closing the screen, switching between public and private, or leaving the
   app ends the code at once.
 - The other person scans it in ID (**LOOK UP → SCAN CODE**). Their ship asks
   yours whether the code is real. Only your ship can answer for your @p, so a
-  made-up code fails. They see what the pass shows, once, marked
-  **✓ VERIFIED** with the time, and they don't keep it. It doesn't give
-  them lasting access.
+  made-up code fails. They see what the pass shows, marked **✓ VERIFIED**
+  with the time. A public pass gives them nothing lasting; a private pass
+  gives them your whole ID until you revoke.
 
 **Look up**
 - Type an @p, scan an ID card or a live pass with your camera, or choose a
@@ -132,10 +137,14 @@ localhost). Otherwise use **Photo of card**.
   bits from the owner's ship. The scanning ship watches
   `/pass/~itself/<code>/<hash of the photo it has>` on the owner.
   - If the code is the owner's live pass, unexpired and unused, the owner sends
-    `%live`, then the public lines or the whole ID, then kicks. The code is then
+    `%live`, then everything that ship may see, then kicks. The code is then
     used up, though the same ship may ask again.
+  - A private pass first accepts the scanning ship, exactly as accepting its
+    request would, so it sees the whole ID from then on, until revoked. A public
+    pass accepts nobody: a stranger sees the public lines, and a ship already
+    accepted sees the whole ID.
   - Otherwise it gets `%nope` with `%gone`, `%used` or `%expired`.
-  - A blocked ship is told `%gone`, and the pass stays unused.
+  - A blocked ship is told `%gone`, isn't accepted, and the pass stays unused.
   - There is one pass at a time.
 - Your photo is saved with a 96×120 thumbnail, so lists stay small.
 - `app/id-sigil.hoon` draws sigils as SVG at `/apps/id/sigil/~ship`, so the page

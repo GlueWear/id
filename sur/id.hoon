@@ -41,10 +41,12 @@
 ::
 ::  a live pass: the QR code SHOW ID puts on the screen.  It holds our @p
 ::  and code, a random number our ship just made.  A ship that scans it
-::  watches /pass/~itself/<code>/<photo it has>; we answer once, with our
-::  public lines or the whole ID, and the code is used up.  Anyone can
-::  make up a code; only ours works, and only we can answer for our @p.
-::  One pass at a time, for two minutes.
+::  watches /pass/~itself/<code>/<photo it has>; we answer once, and the
+::  code is used up.  A public pass shows our public lines; a private one
+::  shows the whole ID and accepts that ship, as if it had asked.  Either
+::  shows a ship already accepted the whole ID.  Anyone can make up a
+::  code; only ours works, and only we can answer for our @p.  One pass at
+::  a time, for two minutes.
 ::
 +$  show  ?(%public %private)
 +$  pass

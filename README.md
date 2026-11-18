@@ -27,8 +27,11 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
 
 **My ID**
 - Opens on your card's **public** side: what anyone who looks you up sees.
-  **PRIVATE** shows your whole ID. The small QR square on the card flips it
-  over to the back, which holds your card code (see below).
+- The strip across the top of the card holds **PUBLIC | PRIVATE**, your sigil
+  and @p, and a small QR square. **PRIVATE** shows your whole ID. The QR square
+  flips the card over to the back, which holds your card code (see below).
+- The screen itself doesn't scroll. A long card scrolls inside, so **EDIT ID**
+  and **SHOW ID** are always on screen.
 - **EDIT ID** opens the editor on its own screen, so your private lines are
   never just a scroll away. On a wide screen the card's preview sits beside it.
 - Every line starts **private**. Switch any line to **public** to show it to
@@ -44,17 +47,22 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
     international form, e.g. `+44 20 7946 0000`
 - Private lines carry an orange dot.
 
+**How ID works**
+- Tap the ID icon at the top left for a short guide, with your @p and the
+  version you are running.
+
 **Show ID**
 - **SHOW ID** opens on a **public** pass, a QR code of your public lines.
   Choose **PRIVATE** for a pass of your whole ID.
 - Your ship makes a new random code for each pass. It works once, for two
-  minutes. When it is scanned your screen says who scanned it.
+  minutes. When it is scanned your screen shows which ship scanned it. If that
+  isn't the person in front of you, someone else got it first: show a new one.
 - Closing the screen, switching between public and private, or leaving the
   app ends the code at once.
 - The other person scans it in ID (**LOOK UP → SCAN CODE**). Their ship asks
   yours whether the code is real. Only your ship can answer for your @p, so a
   made-up code fails. They see what the pass shows, once, marked
-  **LIVE · VERIFIED** with the time, and they don't keep it. It doesn't give
+  **✓ VERIFIED** with the time, and they don't keep it. It doesn't give
   them lasting access.
 
 **Look up**
@@ -71,6 +79,8 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
   are fetched as you scroll, not stored. Lists and IDs wait on a loading screen
   until their pictures have come (two seconds at most for a list), so they
   appear whole.
+- A ship that didn't answer last time is shown as **offline** straight away,
+  without holding up the list, and is checked again quietly.
 
 **Requests**
 - **Accept** shows the asker your whole ID. **Deny** keeps them to your public
@@ -94,6 +104,9 @@ localhost). Otherwise use **Photo of card**.
 - Your ID lives only on your ship. Other ships get only what you allow, over
   Urbit's own network, when they open it. The app doesn't keep a copy on their
   ship.
+- The page keeps one note in your browser: which ships didn't answer last
+  time, and when, so it can show them as offline at once. Nothing from anyone's
+  ID is kept there.
 - After you revoke, the next time they open your ID they see only your public
   lines. Anything already shown could have been written down, and like every
   Urbit message it passes through their ship's event log.

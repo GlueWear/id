@@ -63,8 +63,14 @@ main{max-width:1120px;margin:0 auto;padding:16px 16px 60px}
 /* the strip across the top: [PUBLIC | PRIVATE] [sigil @p] [PARTIAL] [flip] */
 .doc .band{display:flex;align-items:center;gap:10px;padding:8px 10px;min-height:52px;border-bottom:1px solid var(--line);font-size:10px;color:var(--c);background:repeating-linear-gradient(135deg,rgba(57,200,255,.07) 0 6px,transparent 6px 12px)}
 .doc .band .bship{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.doc .band .mono{letter-spacing:.06em;color:var(--w);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.doc .band .mono{letter-spacing:.06em;color:var(--w);font-size:12px;line-height:1.3;min-width:0}
+/* the private side of your own card: sigil and @p in orange */
+.doc .band .bship.priv .mono{color:var(--a)}
 .doc .band .seg,.doc .band .tag{flex:none;margin:0}
+/* PUBLIC, PRIVATE and the QR square stand the same height (36px with the border) */
+.doc .band .seg button{height:34px;padding:0 10px}
+/* an @p is never cut short: a long one (a moon, a comet) wraps after its hyphens */
+.pat{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:break-word;word-break:normal}
 .doc .noname{color:var(--dim);font-size:10px;letter-spacing:.2em}
 .doc .top{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;padding:14px 12px 10px}
 .doc .ph{position:relative;width:120px;height:150px;border:1px solid var(--dim);background:#000 repeating-linear-gradient(45deg,#03101e 0 4px,#000 4px 8px);display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--dim);font-size:10px;letter-spacing:.15em;text-align:center;padding:6px}
@@ -85,6 +91,8 @@ main{max-width:1120px;margin:0 auto;padding:16px 16px 60px}
 .seg{display:inline-flex;border:1px solid var(--dim)}
 .seg button{border:0;padding:5px 10px;font-size:10px;color:var(--dim)}
 .seg button.on{background:var(--c);color:#001424}
+/* on PRIVATE the PRIVATE button turns orange, outline and all, like the private side it shows */
+.seg.priv button.on{background:var(--a);color:#1a1000;box-shadow:0 0 0 1px var(--a)}
 /* editor */
 .ed{display:grid;grid-template-columns:150px minmax(0,1fr) 96px 30px;gap:8px;align-items:start;padding:7px 0;border-top:1px dashed var(--line)}
 .ed:first-of-type{border-top:0}
@@ -201,7 +209,7 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
 .doc.back .bkin{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:8px}
 .seg.gone{visibility:hidden}
 .doc.back .qr{max-width:230px}
-.doc.back .bkship{color:var(--w);font-size:16px;letter-spacing:.06em;word-break:break-all;text-align:center}
+.doc.back .bkship{color:var(--w);font-size:16px;letter-spacing:.06em;overflow-wrap:break-word;max-width:100%;text-align:center}
 .doc.back .bksub{color:var(--dim);font-size:10px;letter-spacing:.3em}
 /* MY ID fills the screen and doesn't scroll: the card scrolls inside, under
    its strip, and EDIT ID and SHOW ID stay below it */
@@ -229,7 +237,7 @@ body.hasbar main{flex:1;min-height:0;width:100%;display:flex;flex-direction:colu
 .mhead{display:flex;align-items:center;gap:10px}
 .mhead .ver{flex:1;color:var(--dim);font-size:10px;letter-spacing:.2em}
 .mme{display:flex;align-items:center;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)}
-.mme .mono{color:var(--w);word-break:break-all}
+.mme .mono{color:var(--w);overflow-wrap:break-word;min-width:0}
 .how h3{margin:18px 0 0;font-size:12px;letter-spacing:.32em;color:var(--w);font-weight:400}
 .how h4{margin:18px 0 8px;font-size:10px;letter-spacing:.24em;color:var(--c);font-weight:400}
 .how ul{margin:0;padding:0;list-style:none}
@@ -254,7 +262,7 @@ body.hasbar main{flex:1;min-height:0;width:100%;display:flex;flex-direction:colu
 .shmeta .grow{min-width:0}
 .shkind{color:var(--c);letter-spacing:.24em;font-size:11px}
 .shbox.priv .shkind{color:var(--a)}
-.shship{color:var(--w);word-break:break-all}
+.shship{color:var(--w);overflow-wrap:break-word}
 .ring{width:46px;height:46px;position:relative;flex:none}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring circle{fill:none;stroke-width:3}
@@ -264,7 +272,8 @@ body.hasbar main{flex:1;min-height:0;width:100%;display:flex;flex-direction:colu
 .shbox .loader{min-height:250px;padding:10px}
 .shown{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 4px;text-align:center}
 .shown .big{color:var(--w);letter-spacing:.3em;font-size:13px}
-.shown .who{flex:none;cursor:default}
+.shown .who{flex:none;max-width:100%;cursor:default}
+.shown .who .mono{min-width:0;overflow-wrap:break-word}
 /* a pass we scanned, checked live with its ship */
 .seal{background:#eef4f7;color:#001424;padding:10px 12px;margin-bottom:10px;border:3px double #001424;outline:1px solid #eef4f7}
 .seal .st{font-weight:900;letter-spacing:.1em;font-size:13px}
@@ -558,16 +567,17 @@ function thumbOf(src){return new Promise(ok=>{const im=new Image();im.onload=()=
 
 /* ---------- sigils, drawn by %id-sigil on our ship ---------- */
 function sigUrl(who,fg,bg){return'/apps/id/sigil/'+encodeURIComponent(who)+'?fg='+(fg||'39c8ff')+'&bg='+(bg||'000913')}
-function sig(who,cls){const i=el('img','sig '+(cls||''));i.alt='';if(!SigOk[who])i.loading='lazy';i.src=sigUrl(who);i.onerror=()=>i.replaceWith(el('span','sig fb '+(cls||''),who.replace(/^~/,'').slice(0,2).toUpperCase()));return i}
+function sig(who,cls,fg){const i=el('img','sig '+(cls||''));i.alt='';if(!SigOk[who])i.loading='lazy';i.src=sigUrl(who,fg);i.onerror=()=>i.replaceWith(el('span','sig fb '+(cls||''),who.replace(/^~/,'').slice(0,2).toUpperCase()));return i}
 
 /* ---------- the ID, as a document ---------- */
 // mode: owner (tags private lines), viewer (tags lines shared with us), public (a stranger's view)
-// o.lead: what starts the strip (PUBLIC | PRIVATE on MY ID)
-// o.flip: the card can be turned over (your own, on MY ID)
-// Your own card isn't tagged PARTIAL: its public side always is, and says so below.
+// The strip: [sigil @p] [o.seg: PUBLIC | PRIVATE on MY ID] [PARTIAL] [o.flip: the QR
+// square that turns your own card over]. On the private side of your own card
+// the sigil and @p are orange. Your own card isn't tagged PARTIAL: its public
+// side always is, and says so below.
 function doc(ship,ls,mode,hidden,o){ls=shown(ls);o=o||{};
- const d=el('div','doc'),band=el('div','band'),bs=el('span','bship');add(bs,sig(ship),el('span','mono',ship));
- add(band,o.lead,bs,hidden>0&&ship!==S.our&&tag('PARTIAL','part'),o.flip&&flipBtn('qr',o.flip));d.appendChild(band);
+ const d=el('div','doc'),band=el('div','band');
+ add(band,shipTag(ship,mode==='owner'),o.seg,hidden>0&&ship!==S.our&&tag('PARTIAL','part'),o.flip&&flipBtn('qr',o.flip));d.appendChild(band);
  const body=el('div','dbody');d.appendChild(body);
  const top=el('div','top'),ph=el('div','ph'),p=lineOf(ls,'photo');
  if(p&&IMG.test(p.value)){const i=el('img');i.alt='Photo';i.src=p.value;ph.appendChild(i);if(dotted(p,mode))ph.appendChild(dot(mode))}
@@ -584,6 +594,8 @@ function doc(ship,ls,mode,hidden,o){ls=shown(ls);o=o||{};
  if(hidden)body.appendChild(el('div','withheld','■ '+plural(hidden,'LINE')+' WITHHELD'));
  else if(!ls.length)body.appendChild(el('div','withheld none',mode==='owner'?'NOTHING FILLED IN YET':'NOTHING ON THIS ID'));
  return d}
+// sigil and @p, as the card's strip shows them
+function shipTag(ship,priv){const bs=el('span','bship'+(priv?' priv':''));add(bs,sig(ship,'',priv?'ffb020':null),el('span','mono pat',ship));return bs}
 function dotted(l,mode){return(mode==='owner'||mode==='viewer')&&l.pub===false}
 function dot(mode){const d=el('span','pdot'+(mode==='viewer'?' shared':''));d.title=mode==='owner'?'Private line':'Private line, shared with you';return d}
 function fieldLab(l,mode){const lab=el('div','lab',l.label);if(dotted(l,mode))lab.prepend(dot(mode));return lab}
@@ -686,23 +698,23 @@ function mePanel(m){if(UI.me==='edit'){editPanel(m);return}
  // the face turned away is hidden once the turn is over, so it can't be scrolled or tapped
  const flip=()=>{UI.flipped=!UI.flipped;fl.classList.toggle('on',UI.flipped);front.inert=UI.flipped;back.inert=!UI.flipped;front.classList.remove('away');back.classList.remove('away');
   clearTimeout(Flip.t);const away=UI.flipped?front:back;Flip.t=setTimeout(()=>away.classList.add('away'),600)};
- const o={flip,lead:cardSeg(false)};
+ const o={flip,seg:cardSeg(false)};
  const front=UI.preview==='owner'?doc(S.our,ls,'owner',0,o):doc(S.our,pub,'public',ls.length-pub.length,o);front.classList.add('side','front');front.querySelector('.dbody').dataset.sk='front:'+UI.preview;
  const back=docBack(flip);back.classList.add('side');front.inert=UI.flipped;back.inert=!UI.flipped;(UI.flipped?front:back).classList.add('away');
  add(fin,front,back);fl.appendChild(fin);w.appendChild(fl);
  const ab=el('div','actbar');add(ab,btn('EDIT ID',editMe,'big'),btn('SHOW ID',()=>openShow('public'),'go big'));w.appendChild(ab)}
-// PUBLIC | PRIVATE, starting the card's strip. The back of the card holds a
-// hidden copy, so the sigil and @p don't move when it flips.
-function cardSeg(gone){const seg=el('div','seg'+(gone?' gone':''));if(gone)seg.setAttribute('aria-hidden','true');else seg.id='cardseg';
+// PUBLIC | PRIVATE, in the card's strip. The back of the card holds a hidden
+// copy, so the @p wraps the same way on both sides.
+function cardSeg(gone){const seg=el('div','seg'+(gone?' gone':'')+(UI.preview==='owner'?' priv':''));if(gone)seg.setAttribute('aria-hidden','true');else seg.id='cardseg';
  for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;draw()},UI.preview===k?'on':'');b.title=h;if(gone)b.tabIndex=-1;else b.dataset.k='cv:'+k;seg.appendChild(b)}
  return seg}
 // the back of the card: a QR code of your @p, to print on a card
-function docBack(flip){const d=el('div','doc back');const band=el('div','band'),bs=el('span','bship');add(bs,sig(S.our),el('span','mono',S.our));add(band,cardSeg(true),bs,flipBtn('card',flip));d.appendChild(band);
+function docBack(flip){const d=el('div','doc back');const band=el('div','band');add(band,shipTag(S.our,false),cardSeg(true),flipBtn('card',flip));d.appendChild(band);
  const b=el('div','bk dbody'),inn=el('div','bkin'),im=el('img','qr');im.alt='QR code for '+S.our;b.dataset.sk='back';
  const svgP=UI.qr||(UI.qr=qrSvg(S.our));svgP.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{im.replaceWith(status('Could not draw the code.','bad'))});
  const r=el('div','row');r.style.justifyContent='center';
  add(r,btn('DOWNLOAD SVG',async()=>download(fileBase()+'-qr.svg',new Blob([await svgP],{type:'image/svg+xml'}))),btn('DOWNLOAD PNG',async()=>{try{download(fileBase()+'-qr.png',await qrPng(await svgP,1200))}catch(e){note('Could not make the PNG.')}}));
- add(inn,im,el('div','bkship',S.our),el('div','bksub','SCAN TO LOOK UP'),r);b.appendChild(inn);d.appendChild(b);return d}
+ add(inn,im,el('div','bkship pat',S.our),el('div','bksub','SCAN TO LOOK UP'),r);b.appendChild(inn);d.appendChild(b);return d}
 // the button that flips the card: a little QR code on the front, a card on the back
 const ICON={qr:'<svg viewBox="0 0 21 21" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2z"/><path d="M9 0h2v2H9zM9 3h2v3H9zM12 9h2v2h-2zM9 8h2v4H9zM15 9h2v2h-2zM19 8h2v3h-2zM9 14h2v2H9zM12 12h3v2h-3zM16 13h2v3h-2zM19 16h2v2h-2zM12 17h2v4h-2zM15 19h3v2h-3zM0 9h2v2H0zM4 8h3v2H4zM9 18h2v3H9z"/></svg>',
  card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="2" y="5" width="20" height="14"/><rect x="5" y="8.5" width="5" height="6.5"/><path d="M13 9.5h6M13 12.5h6M13 15.5h4"/></svg>'};
@@ -716,7 +728,7 @@ function editPanel(m){
  const pv=el('div');pv.id='pvcol';left.appendChild(pv);
  drawPreview();drawEditor()}
 function drawPreview(){const L=$('pvcol');if(!L)return;L.textContent='';
- const s=sec('PREVIEW');const seg=el('div','seg');for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;drawPreview()},UI.preview===k?'on':'');b.title=h;b.dataset.k='pv:'+k;seg.appendChild(b)}s.querySelector('h3').appendChild(seg);
+ const s=sec('PREVIEW');const seg=el('div','seg'+(UI.preview==='owner'?' priv':''));for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;drawPreview()},UI.preview===k?'on':'');b.title=h;b.dataset.k='pv:'+k;seg.appendChild(b)}s.querySelector('h3').appendChild(seg);
  const ls=shown(toLines(D));const pub=ls.filter(l=>l.pub);
  s.appendChild(UI.preview==='owner'?doc(S.our,ls,'owner',0):doc(S.our,pub,'public',ls.length-pub.length));L.appendChild(s)}
 function visBtn(o){const b=btn(o.pub?'PUBLIC':'PRIVATE',()=>{o.pub=!o.pub;b.textContent=o.pub?'PUBLIC':'PRIVATE';b.className='vis '+(o.pub?'pub':'priv');edited()},'vis '+(o.pub?'pub':'priv'));b.title='Click to switch';return b}
@@ -794,7 +806,7 @@ function lookPanel(m){
  const es=Object.values(S.book).sort((a,b)=>(b.fresh-a.fresh)||((b.added||0)-(a.added||0)));
  const b=sec('IDS ON FILE',el('span','dim',String(es.length)));
  if(!es.length)b.appendChild(el('div','empty','NONE YET'));
- for(const e of es){const it=el('div','item');it.dataset.row=e.who;it.onclick=()=>openId(e.who);const d=dataOf(e.who,'row'),nm=d?nameOf(d.lines):null;const mid=el('div');mid.style.minWidth='0';add(mid,el('div','nm',nm||e.who),el('div','sub',nm?e.who:(d?'NO NAME SHOWN':'')));
+ for(const e of es){const it=el('div','item');it.dataset.row=e.who;it.onclick=()=>openId(e.who);const d=dataOf(e.who,'row'),nm=d?nameOf(d.lines):null;const mid=el('div');mid.style.minWidth='0';add(mid,el('div','nm'+(nm?'':' pat'),nm||e.who),el('div','sub'+(nm?' pat':''),nm?e.who:(d?'NO NAME SHOWN':'')));
   const right=el('div','chips');if(e.fresh)right.appendChild(tag('NEW','new'));for(const t of entryInfo(e.who))right.appendChild(t);add(it,face(e.who,'lg'),mid,right);b.appendChild(it)}
  m.appendChild(b)}
 function theirPanel(m,who){if(UI.pass&&UI.pass.who===who){passPanel(m,who);return}const e=S.book[who]||{},f=slot(who,'full'),v=f.data;
@@ -835,7 +847,7 @@ function passPanel(m0,who){const P=UI.pass,v=P.data,h=v&&v.pic&&v.pic.hash,m=el(
  if(!v){m.appendChild(loader('VERIFYING','CHECKING THE PASS WITH '+who,0,2));return}
  if(h&&!imgOk(h,'full')&&Date.now()-v.at<4000){m.appendChild(loader('VERIFYING','RECEIVING PHOTO',1,2));return}
  const L=m;
- const seal=el('div','seal');add(seal,el('div','st','✓ VERIFIED · '+(P.show==='private'?'PRIVATE PASS':'PUBLIC PASS')+' · '+clock(v.at)),el('div','ss','CHECK THEIR FACE AGAINST THE PHOTO'));L.appendChild(seal);
+ const seal=el('div','seal');add(seal,el('div','st','✓ VERIFIED · '+(P.show==='private'?'PRIVATE PASS':'PUBLIC PASS')+' · '+clock(v.at)));L.appendChild(seal);
  const ls=v.lines.slice();if(v.pic){const im=Img[h],src=im&&(im.full||im.thumb);if(src)ls.unshift({key:'photo',label:'PHOTO',value:src,pub:v.pic.pub})}
  L.appendChild(doc(who,ls,'viewer',v.hidden))}
 $('cardin').onchange=e=>{const f=e.target.files[0];e.target.value='';readCard(f)};
@@ -874,12 +886,12 @@ function drawShow(){const o=$('show');o.textContent='';if(!UI.show){o.classList.
  const hd=el('div','shhead');add(hd,el('span','t','SHOW ID'),p&&!p.used&&el('span','live','LIVE'),btn('✕ CLOSE',()=>closeShow(),'x'));box.appendChild(hd);
  const seg=el('div','seg');for(const[v,n,h]of[['public','PUBLIC','A pass that shows your public lines'],['private','PRIVATE','A pass that shows your whole ID']]){const b=btn(n,()=>{if(v!==k)againShow(v)},k===v?'on':'');b.title=h;b.dataset.k='sh:'+v;seg.appendChild(b)}box.appendChild(seg);
  if(!p)box.appendChild(loader('ISSUING PASS','ASKING YOUR SHIP FOR A CODE'));
- else if(p.used){const w=el('div','shown'),who=el('div','who');add(who,sig(p.used,'lg'),el('div','white mono',p.used));
+ else if(p.used){const w=el('div','shown'),who=el('div','who');add(who,sig(p.used,'lg'),el('div','white mono pat',p.used));
   add(w,el('div','big','✓ SCANNED BY'),who);
   const r=el('div','row');r.style.justifyContent='center';add(r,btn('SHOW AGAIN',()=>againShow(k)),btn('DONE',()=>closeShow(),'go'));w.appendChild(r);box.appendChild(w)}
  else{if(!Show.qr||Show.qr.code!==p.code)Show.qr={code:p.code,svg:qrSvg(S.our,passText(S.our,p.code))};
   const q=el('div','shqr'),im=el('img');im.alt='Live pass for '+S.our;q.appendChild(im);Show.qr.svg.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{q.replaceWith(status('Could not draw the code.','bad'))});box.appendChild(q);
-  const meta=el('div','shmeta'),g=el('div','grow');add(g,el('div','shkind',k==='private'?'PRIVATE PASS · YOUR WHOLE ID':'PUBLIC PASS · YOUR PUBLIC LINES'),el('div','shship',S.our));
+  const meta=el('div','shmeta'),g=el('div','grow');add(g,el('div','shkind',k==='private'?'PRIVATE PASS · YOUR WHOLE ID':'PUBLIC PASS · YOUR PUBLIC LINES'),el('div','shship pat',S.our));
   const ring=el('div','ring');ring.id='shring';ring.innerHTML='<svg viewBox="0 0 46 46" aria-hidden="true"><circle class="bg" cx="23" cy="23" r="20"/><circle class="fg" cx="23" cy="23" r="20"/></svg><span></span>';ring.querySelector('.fg').style.strokeDasharray=String(RING);
   add(meta,g,ring);box.appendChild(meta)}
  o.appendChild(box);tickShow()}
@@ -888,7 +900,7 @@ addEventListener('pagehide',()=>{if(!UI.show||!Chan.url||!Chan.ship)return;
  try{fetch(Chan.url,{method:'PUT',keepalive:true,credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify([{id:++Chan.id,action:'poke',ship:Chan.ship,app:'id',mark:'id-action',json:{hide:null}}])})}catch(e){}});
 
 /* the menu, behind the icon: who you are, and how ID works */
-const VERSION="0.3.1";// written in by build.mjs from desk.docket-0
+const VERSION="0.3.2";// written in by build.mjs from desk.docket-0
 const HOW=[
  ['YOUR ID',[
   'Your ID is kept on your ship and nowhere else.',
@@ -896,8 +908,7 @@ const HOW=[
  ['PUBLIC AND PRIVATE',[
   'Every line on your ID is public or private. You choose.',
   ['Public:','anyone who looks you up sees it.'],
-  ['Private:','only ships you accept see it. On your own ID these lines carry an orange dot.'],
-  'A green dot on someone else’s ID means a private line they’ve shared with you.']],
+  ['Private:','only ships you accept see it.']]],
  ['REQUESTS',[
   'Anyone can ask to see your private lines.',
   ['Accept:','they see your whole ID, including later changes, until you revoke.'],
@@ -909,11 +920,9 @@ const HOW=[
   'Public shows your public lines. Private shows your whole ID.',
   'The other person scans it in LOOK UP. Their ship checks it with yours, so a fake code fails.',
   'Closing the screen ends the code.',
-  'Your screen then shows who scanned it. If that isn’t the person in front of you, someone else got it first. Show a new one.']],
+  'Your screen then shows who scanned it.']],
  ['CHECKING SOMEONE’S PASS',[
-  '✓ VERIFIED means their ship made the code just now.',
-  'It proves the ship, not the person. Compare their face with the photo.',
-  'What they showed you isn’t saved. It closes when you leave.']],
+  '✓ VERIFIED means their ship made the code just now.']],
  ['YOUR CARD CODE',[
   'The QR on the back of your card holds only your @p.',
   'Scanning it does the same as typing your @p into LOOK UP.',
@@ -923,7 +932,7 @@ function closeMenu(){if(!UI.menu)return;UI.menu=false;drawMenu();$('menubtn').fo
 function drawMenu(){const o=$('menu');o.textContent='';o.classList.toggle('hidden',!UI.menu);if(!UI.menu)return;
  const box=el('div','mbox'),hd=el('div','mhead'),logo=el('img','logo');logo.alt='';logo.src=$('menubtn').querySelector('img').src;
  add(hd,logo,el('span','ver',VERSION.startsWith('/*')?'ID':'ID · VERSION '+VERSION),btn('✕ CLOSE',closeMenu,'x'));box.appendChild(hd);
- if(S.our){const me=el('div','mme');add(me,sig(S.our,'lg'),el('span','mono',S.our));box.appendChild(me)}
+ if(S.our){const me=el('div','mme');add(me,sig(S.our,'lg'),el('span','mono pat',S.our));box.appendChild(me)}
  const how=el('div','how');how.appendChild(el('h3',null,'HOW ID WORKS'));for(const[h,items]of HOW){how.appendChild(el('h4',null,h));const ul=el('ul');
   for(const it of items){const li=el('li');if(Array.isArray(it))add(li,el('b',null,it[0]),' '+it[1]);else li.textContent=it;ul.appendChild(li)}how.appendChild(ul)}
  box.appendChild(how);o.appendChild(box)}

@@ -27,9 +27,13 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
 
 **My ID**
 - Opens on your card's **public** side: what anyone who looks you up sees.
-- The strip across the top of the card holds **PUBLIC | PRIVATE**, your sigil
-  and @p, and a small QR square. **PRIVATE** shows your whole ID. The QR square
-  flips the card over to the back, which holds your card code (see below).
+- The strip across the top of the card holds your sigil and @p,
+  **PUBLIC | PRIVATE**, and a small QR square. **PRIVATE** shows your whole ID;
+  your sigil, @p and the PRIVATE button turn orange so you can tell at a
+  glance. The QR square flips the card over to the back, which holds your card
+  code (see below).
+- An @p is always shown in full, never shortened. A moon's or a comet's wraps
+  onto more lines.
 - The screen itself doesn't scroll. A long card scrolls inside, so **EDIT ID**
   and **SHOW ID** are always on screen.
 - **EDIT ID** opens the editor on its own screen, so your private lines are

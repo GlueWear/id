@@ -8,6 +8,17 @@
   ++  json
     |=  jon=^json
     ^-  action:id
+    ::  a pass: {show: {show, seal}}, where the seal is a private pass's
+    ::  whole ID locked for the web.  A page from before seals sends only
+    ::  {show: "public"}.
+    =/  old=?
+      ?.  ?=([%o *] jon)  |
+      =/  v  (~(get by p.jon) 'show')
+      ?=([~ %s *] v)
+    =?  jon  old
+      ?>  ?=([%o *] jon)
+      =/  kind=^json  (~(got by p.jon) 'show')
+      [%o (~(put by p.jon) 'show' (pairs:enjs:format ~[['show' kind] ['seal' s+'']]))]
     =,  dejs:format
     =/  ln
       %-  ot
@@ -29,9 +40,10 @@
         [%decline (ot ~[who+(se %p)])]
         [%block (ot ~[who+(se %p)])]
         [%unblock (ot ~[who+(se %p)])]
-        [%show (cu |=(t=@t ;;(show:id t)) so)]
+        [%show (ot ~[show+(cu |=(t=@t ;;(show:id t)) so) seal+so])]
         [%hide ul]
         [%redeem (ot ~[who+(se %p) code+(se %uv) have+(se %uv)])]
+        [%more (ot ~[who+(se %p) have+(ar (se %uv))])]
     ==
   --
 ++  grow

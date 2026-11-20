@@ -2,13 +2,17 @@
 
 An identity card held on your own Urbit ship.
 
-Fill in as much or as little as you like: name, date of birth, height, address,
-phone, a photo, and lines of your own. Each line is **public** or **private**.
-Anyone with ID can look you up by @p or by scanning your card. They see your
-public lines straight away and can request the rest. You accept, deny or block.
+Fill in as much or as little as you like: your name, a photo, your signature,
+date of birth, height, address, phone, wallets, accounts and lines of your own.
+Each line is **public** or **private**. Anyone can look you up by @p or by
+scanning your card and see your public lines. Private details are never just
+taken: they are **exchanged**. You see someone's private details only when they
+can see yours.
 
 To prove it's you, press **SHOW ID**. It shows a live pass: a QR code that
-works once, for two minutes, and that only your ship can answer for.
+works once, for two minutes, and that only your ship can answer for. People
+without Urbit can scan it with a phone camera too: it opens on
+[offlineazimuth.com](https://offlineazimuth.com).
 
 Your ID stays on your ship. Other ships fetch it when someone opens it, show
 it, and don't keep it.
@@ -27,52 +31,62 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
 
 **My ID**
 - Opens on your card's **public** side: what anyone who looks you up sees.
-- The strip across the top of the card holds your sigil and @p,
-  **PUBLIC | PRIVATE**, and a small QR square. **PRIVATE** shows your whole ID;
-  your sigil, @p and the PRIVATE button turn orange so you can tell at a
-  glance. The QR square flips the card over to the back, which holds your card
-  code (see below).
-- An @p is always shown in full, never shortened. A moon's or a comet's wraps
-  onto more lines.
-- The screen itself doesn't scroll. A long card scrolls inside, so **EDIT ID**
-  and **SHOW ID** are always on screen.
+- The card shows your photo; your first, middle and last name; what you go by;
+  your ship's class and number (worked out from your @p); your signature; and
+  in the corner a second photo, or a faded copy of the first. Tap a photo to see
+  it full size.
+- The strip across the top holds your sigil and @p, **PUBLIC | PRIVATE**, and a
+  small QR square. **PRIVATE** shows your whole ID, in orange so you can tell at
+  a glance. The QR square flips the card to its back (see **The card**).
 - **EDIT ID** opens the editor on its own screen, so your private lines are
-  never just a scroll away. On a wide screen the card's preview sits beside it.
-- Every line starts **private**. Switch any line to **public** to show it to
-  everyone who looks you up.
-- Your name is a first name, a last name, and what you go by.
-- Standard lines use one fixed form so every ID reads the same way:
-  - date of birth: `YYYY-MM-DD`
-  - height: `5 FT 11 IN`
-  - weight: `170 LB`
-  - sex: M or F
-  - eye and hair colour, and country, from lists
-  - phone numbers are checked against the country's numbering plan and saved in
+  never just a scroll away. Every line starts **private**; switch any line to
+  **public** to show it to everyone.
+- Standard lines use one fixed form, so every ID reads the same way:
+  - date of birth `YYYY-MM-DD`, height `5 FT 11 IN`, weight `170 LB`, sex M or F
+  - eyes, hair, blood type, organ donor and country from lists
+  - the address in parts: street, street 2, city, state / region, postal code,
+    country
+  - phone numbers checked against the country's numbering plan and saved in
     international form, e.g. `+44 20 7946 0000`
+  - wallets checked with each chain's own checksum (Ethereum, Bitcoin, Solana),
+    and accounts for X, Bluesky, Farcaster, GitHub, Instagram, Nostr, Telegram
+    and Discord, as many as you like
+  - a website, linked only if it is a plain http(s) address
+- Your signature is drawn on screen and saved as a small vector drawing.
 - Private lines carry an orange dot.
 
 **How ID works**
 - Tap the ID icon at the top left for a short guide, with your @p and the
   version you are running.
 
+**Exchanging private details**
+- On someone's ID, **EXCHANGE PRIVATE DETAILS** sends them an offer.
+- They **accept** (and you both see each other's whole ID, including later
+  changes), **deny**, or **block** (their offers are turned down from now on;
+  they aren't told).
+- Either of you can **END EXCHANGE** at any time, and then neither sees the
+  other's private details. It can't erase what was already seen.
+- The **EXCHANGES** tab lists offers waiting on you, who you exchange with, your
+  own offers, and blocked ships. **ACCEPT & EXCHANGE** takes you to their ID.
+- A ship still running an ID from before exchanges can only ask one way, and is
+  marked so. Accepting it shows it your ID without showing you theirs.
+
 **Show ID**
-- **SHOW ID** opens on a **public** pass, a QR code of your public lines
-  (or of your whole ID, for a ship you have already accepted).
-- Choose **PRIVATE** for a pass of your whole ID. Letting someone scan it is
-  the same as accepting their request: they keep seeing your whole ID,
-  including later changes, until you revoke. They are listed under **Requests**
-  with **Revoke**.
+- **SHOW ID** opens on a **public** pass: your public lines (or your whole ID,
+  for a ship you already exchange with).
+- **PRIVATE** makes a pass that also offers an exchange to whoever scans it in
+  ID. They see **EXCHANGE & VIEW**.
 - Your ship makes a new random code for each pass. It works once, for two
-  minutes. When it is scanned your screen shows which ship scanned it; tap it
-  to open their ID. If that isn't the person in front of you, someone else got
-  it first: show a new one, and revoke the ship that scanned a private pass.
-- Closing the screen, switching between public and private, or leaving the
-  app ends the code at once.
-- The other person scans it in ID (**LOOK UP → SCAN CODE**). Their ship asks
-  yours whether the code is real. Only your ship can answer for your @p, so a
-  made-up code fails. They see what the pass shows, marked **✓ VERIFIED**
-  with the time. A public pass gives them nothing lasting; a private pass
-  gives them your whole ID until you revoke.
+  minutes. When it is scanned, your screen shows **✓ VERIFIED** with the ship
+  that scanned it and its card, or **WEB VIEWER** if it was opened on the web.
+- Closing the screen, switching between public and private, or leaving the app
+  ends the code at once.
+- Someone with ID scans it in **LOOK UP**. Their ship asks yours whether the
+  code is real; only your ship can answer for your @p, so a made-up code fails.
+- Someone without ID scans it with a phone camera. It opens on
+  offlineazimuth.com, checked with your ship the same way. **On the web, either
+  pass shows only your public lines.** Private details are only ever exchanged
+  in ID.
 
 **Look up**
 - Type an @p, scan an ID card or a live pass with your camera, or choose a
@@ -81,44 +95,46 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
   **offline or unavailable**, with **Try again**. An open ID checks for changes
   every 30 seconds.
 - If part of an ID is private, it is marked **PARTIAL** and the withheld lines
-  are blacked out. Press **REQUEST ID** to ask for the rest.
-- Once they accept, you see their whole ID, including later changes, until they
-  revoke. Lines shared with you carry a green dot.
+  are blacked out. Lines shared with you carry a green dot.
 - Your list keeps only the ships you have looked up. Their names and thumbnails
-  are fetched as you scroll, not stored. Lists and IDs wait on a loading screen
-  until their pictures have come (two seconds at most for a list), so they
-  appear whole.
-- A ship that didn't answer last time is shown as **offline** straight away,
-  without holding up the list, and is checked again quietly.
-
-**Requests**
-- **Accept** shows the asker your whole ID. **Deny** keeps them to your public
-  lines. **Block** denies every request they send from now on; they aren't told
-  they are blocked.
-- Everyone you have accepted is listed with **Revoke**. Blocked ships are listed
-  with **Unblock**.
+  are fetched as you scroll, not stored.
 
 ## The card
 
 The back of your card on **MY ID** holds a QR code to print on a card, as SVG
-(vector) or PNG. It holds only your @p, with your sigil in the middle. Whoever
-scans it sees what you allow, live from your ship, so a lost card gives nothing
-away. A card only says who to look up. To prove it's you, use **SHOW ID**.
+(vector) or PNG, with your sigil in the middle. It is a link to your public ID:
+`https://offlineazimuth.com/id/~your-ship`.
 
-Scanning with the camera needs the page to be open over https (or on
+- A phone camera opens it on the web, for anyone.
+- ID's own scanner reads it as your @p, so it opens your ID in the app. Older
+  versions of ID read it the same way.
+- Whoever scans it sees only what you allow, live from your ship, so a lost card
+  gives nothing away. A card only says who to look up; anyone can copy one. To
+  prove it's you, use **SHOW ID**.
+
+Scanning with the camera inside ID needs the page to be open over https (or on
 localhost). Otherwise use **Photo of card**.
+
+## Offline Azimuth
+
+[offlineazimuth.com](https://offlineazimuth.com) shows public IDs to people who
+don't run Urbit. Its server has its own Urbit identity and asks your ship over
+Urbit's network, like any other ship would. It only ever gets your **public**
+lines: from `/public/v1` when someone opens your card's link, and from a live
+pass when someone scans one. It keeps nothing, sets no cookies and never logs in
+to your ship.
 
 ## What ID does and doesn't promise
 
 - Your ID lives only on your ship. Other ships get only what you allow, over
   Urbit's own network, when they open it. The app doesn't keep a copy on their
   ship.
-- The page keeps one note in your browser: which ships didn't answer last
-  time, and when, so it can show them as offline at once. Nothing from anyone's
-  ID is kept there.
-- After you revoke, the next time they open your ID they see only your public
-  lines. Anything already shown could have been written down, and like every
-  Urbit message it passes through their ship's event log.
+- The page keeps one note in your browser: which ships didn't answer last time,
+  and when, so it can show them as offline at once. Nothing from anyone's ID is
+  kept there.
+- After an exchange ends, each side sees only the other's public lines the next
+  time it opens the ID. Anything already shown could have been written down, and
+  like every Urbit message it passes through the other ship's event log.
 - The details on an ID are what its owner typed in. ID proves which ship you are
   dealing with, not that the details are true.
 - A verified live pass proves that whoever showed it controls that ship and
@@ -127,25 +143,33 @@ localhost). Otherwise use **Photo of card**.
 
 ## How it works
 
-- `app/id.hoon`, the agent: holds your ID, the requests and who you have
-  accepted. A ship opening your ID watches
+- `app/id.hoon`, the agent, holds your ID, the offers, exchanges and blocks.
+- A ship opening your ID watches
   `/card/~that-ship/<full|row>/<hash of the photo it has>`. It is sent what it
-  may see (the photo only if it doesn't have it) and then kicked, so the
-  answer is used once. When what a ship may see changes, it gets a `%nudge` to
-  fetch again. Ships running version 0.1 are still answered on `/view/~ship`.
-- A live pass is a QR code of `IDPASS:SHIP:CODE`, where the code is 128 random
-  bits from the owner's ship. The scanning ship watches
-  `/pass/~itself/<code>/<hash of the photo it has>` on the owner.
-  - If the code is the owner's live pass, unexpired and unused, the owner sends
-    `%live`, then everything that ship may see, then kicks. The code is then
-    used up, though the same ship may ask again.
-  - A private pass first accepts the scanning ship, exactly as accepting its
-    request would, so it sees the whole ID from then on, until revoked. A public
-    pass accepts nobody: a stranger sees the public lines, and a ship already
-    accepted sees the whole ID.
-  - Otherwise it gets `%nope` with `%gone`, `%used` or `%expired`.
-  - A blocked ship is told `%gone`, isn't accepted, and the pass stays unused.
-  - There is one pass at a time.
+  may see (the photo only if it doesn't have it) and then kicked, so the answer
+  is used once. When what a ship may see changes, it gets a `%nudge` to fetch
+  again.
+- The second photo and the signature travel apart from the lines, on
+  `/more/~that-ship/<hashes it has>`, so IDs from before them never see them.
+- Exchanges are ship-to-ship pokes: `%offer`, `%accept` and `%end`. A ship whose
+  ID predates exchanges refuses `%offer` and is asked the old one-way way
+  (`%ask`).
+- A live pass is a link, `https://offlineazimuth.com/p/~ship/<code>`, where the
+  code is 128 random bits from the owner's ship.
+  - A ship with ID watches `/pass/~itself/<code>/<hash of the photo it has>` on
+    the owner. If the code is the owner's live pass, unexpired and unused, the
+    owner sends `%live`, then everything that ship may see, then kicks. A
+    private pass also offers that ship an exchange. Otherwise it gets `%nope`
+    with `%gone`, `%used` or `%expired`.
+  - The website watches `/web/v1/<code>` and gets the public lines (as JSON), or
+    `gone`, `expired` or `used`.
+  - The code is then used up, though the same ship may ask again. A blocked ship
+    is told it's gone, and the pass stays unused. There is one pass at a time.
+  - Passes from earlier versions, `IDPASS:SHIP:CODE`, are still read.
+- `/public/v1` gives the public lines once, as JSON, for the website and other
+  clients.
+- Saved data from every earlier version upgrades in place: 0.4's waiting
+  requests become one-way requests, and ships it had accepted stay one-way.
 - Your photo is saved with a 96×120 thumbnail, so lists stay small.
 - `app/id-sigil.hoon` draws sigils as SVG at `/apps/id/sigil/~ship`, so the page
   needs no network for them.

@@ -48,10 +48,15 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
     country
   - phone numbers checked against the country's numbering plan and saved in
     international form, e.g. `+44 20 7946 0000`
-  - wallets checked with each chain's own checksum (Ethereum, Bitcoin, Solana),
-    and accounts for X, Bluesky, Farcaster, GitHub, Instagram, Nostr, Telegram
-    and Discord, as many as you like
-  - a website, linked only if it is a plain http(s) address
+  - wallets for Ethereum, Bitcoin, Solana and Nockchain, as many as you like.
+    Ethereum and Bitcoin addresses are checked with the chain's own checksum,
+    so a typo is caught. Solana and Nockchain addresses carry no checksum, so
+    only their form is checked.
+  - accounts for X, Bluesky, Farcaster, GitHub, Instagram, YouTube, Nostr,
+    Telegram and Discord, as many as you like. For YouTube, give the @handle,
+    or paste a `youtube.com/@handle` link.
+  - websites, as many as you like (**+ ADD WEBSITE**), each linked only if it
+    is a plain http(s) address
 - Your signature is drawn on screen and saved as a small vector drawing.
 - Private lines carry an orange dot.
 
@@ -96,14 +101,17 @@ Then open **ID** from your home screen, or go to `/apps/id` on your ship.
   every 30 seconds.
 - If part of an ID is private, it is marked **PARTIAL** and the withheld lines
   are blacked out. Lines shared with you carry a green dot.
+- The QR square in the card's strip turns it over, as on your own card: the back
+  holds their QR code, with **COPY LINK** and the downloads.
 - Your list keeps only the ships you have looked up. Their names and thumbnails
   are fetched as you scroll, not stored.
 
 ## The card
 
-The back of your card on **MY ID** holds a QR code to print on a card, as SVG
-(vector) or PNG, with your sigil in the middle. It is a link to your public ID:
-`https://offlineazimuth.com/id/~your-ship`.
+The back of your card on **MY ID** holds a QR code to print on a card, with
+your sigil in the middle. It is a link to your public ID:
+`https://offlineazimuth.com/id/~your-ship`. **COPY LINK** copies it, to paste
+anywhere; **DOWNLOAD SVG** (vector) and **DOWNLOAD PNG** save the code.
 
 - A phone camera opens it on the web, for anyone.
 - ID's own scanner reads it as your @p, so it opens your ID in the app. Older

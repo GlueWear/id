@@ -183,6 +183,7 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
 .lightbox .x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;background:#000c}
 /* editor: groups of lines, two photos, the signature pad, wallets and accounts */
 .edgrp{color:var(--c);font-size:10px;letter-spacing:.25em;padding:14px 0 6px;border-top:1px solid var(--line);margin-top:4px}
+.addsite{padding:2px 0 8px 158px}
 .phrow{display:flex;gap:12px 18px;flex-wrap:wrap}
 .phrow .phed{flex:1;min-width:240px}
 .phed .cap{color:var(--dim);font-size:10px;letter-spacing:.2em;margin-bottom:8px}
@@ -255,12 +256,16 @@ button.amber{color:#1a1000;background:var(--a);border-color:var(--a)}button.ambe
 .flip .side.away{visibility:hidden}
 @media (prefers-reduced-motion:reduce){.flip .fin{transition:none}}
 .doc.back{display:flex;flex-direction:column}
+/* someone else's card can be long: its back keeps the code at the top, where you are */
+.flip .side.back{align-self:start}
+.mewrap .flip .side.back{align-self:stretch}
 .doc.back .bk{flex:1;display:flex;flex-direction:column;padding:16px 12px 14px}
 .doc.back .bkin{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:8px}
 .seg.gone{visibility:hidden}
 .doc.back .qr{max-width:230px}
 .doc.back .bkship{color:var(--w);font-size:16px;letter-spacing:.06em;overflow-wrap:break-word;max-width:100%;text-align:center}
 .doc.back .bksub{color:var(--dim);font-size:10px;letter-spacing:.3em}
+.doc.back .bkbtns{justify-content:center;flex-wrap:nowrap;max-width:100%}
 .doc.back a.bksub{text-decoration:none}.doc.back a.bksub:hover{text-decoration:underline}
 /* MY ID fills the screen and doesn't scroll: the card scrolls inside, under
    its strip, and EDIT ID and SHOW ID stay below it */
@@ -364,7 +369,11 @@ body.hasbar main{flex:1;min-height:0;width:100%;display:flex;flex-direction:colu
  .doc .ghost{width:48px;height:60px}
  .doc .hd.hasgh>.idrow,.doc .hd.hasgh>.gb{padding-right:58px}
  .rep{grid-template-columns:minmax(0,1fr) 96px 30px;grid-template-areas:"pk vis x" "fld fld fld";row-gap:6px}
+ .addsite{padding-left:0}
+ .doc.back .bkbtns{gap:6px}
+ .doc.back .bkbtns button{padding:6px 7px;font-size:11px;letter-spacing:.04em;white-space:nowrap}
  .rep>:nth-child(1){grid-area:pk}.rep>:nth-child(2){grid-area:fld}.rep>:nth-child(3){grid-area:vis}.rep>:nth-child(4){grid-area:x}
+@media (max-width:360px){.doc.back .bkbtns{gap:4px}.doc.back .bkbtns button{padding:5px 5px;font-size:10px;letter-spacing:.02em}}
  .pick{grid-template-columns:22px minmax(0,1fr)}
  .pick .v{grid-column:2}
 }
@@ -499,7 +508,16 @@ function bech32(s){if(s!==s.toLowerCase()&&s!==s.toUpperCase())return null;s=s.t
 function bits85(d){let acc=0,n=0;const out=[];for(const v of d){acc=(acc<<5)|v;n+=5;while(n>=8){n-=8;out.push((acc>>>n)&255)}}if(n>=5||(acc&((1<<n)-1)))return null;return out}
 const hexOf=a=>a.map(b=>b.toString(16).padStart(2,'0')).join('');
 function ethSum(hex){const h=hexOf(keccak256([...hex.toLowerCase()].map(c=>c.charCodeAt(0))));return'0x'+[...hex.toLowerCase()].map((c,i)=>parseInt(h[i],16)>=8?c.toUpperCase():c).join('')}
-const CHAINS=[['ETH','ETHEREUM / EVM','0x…'],['BTC','BITCOIN','bc1… or 1… or 3…'],['SOL','SOLANA','Address']];
+const CHAINS=[['ETH','ETHEREUM / EVM','0x…'],['BTC','BITCOIN','bc1… or 1… or 3…'],['SOL','SOLANA','Address'],['NOCK','NOCKCHAIN','Address']];
+// Nockchain (as its wallet reads them, nockchain/nockchain): an address is base58 of a
+// tip5 hash, a number below p⁵ (p = 2⁶⁴−2³²+1) written with no leading 1s; an older (v0)
+// one is a 97-byte public key starting 0x01, each of its 12 parts below p. Neither has a
+// checksum, so only the form can be checked.
+const NOCKP=0xffffffff00000001n;
+function nockOk(a){if(!/^[1-9A-HJ-NP-Za-km-z]+$/.test(a))return false;
+ if(a.length<=60){if(a[0]==='1')return false;let n=0n;for(const ch of a)n=n*58n+BigInt(B58.indexOf(ch));return n<NOCKP**5n}
+ const b=b58(a);if(!b||b.length!==97||b[0]!==1)return false;
+ for(let i=1;i<97;i+=8){let v=0n;for(let j=0;j<8;j++)v=v*256n+BigInt(b[i+j]);if(v>=NOCKP)return false}return true}
 function walletCheck(chain,raw){const a=String(raw||'').trim();if(!a)return{value:''};
  if(chain==='ETH'){const m=/^0x([0-9a-fA-F]{40})$/.exec(a);if(!m)return{bad:'An Ethereum address is 0x and 40 letters or digits.'};
   const s=ethSum(m[1]);if(m[1]!==m[1].toLowerCase()&&m[1]!==m[1].toUpperCase()&&s!=='0x'+m[1])return{bad:'The capital letters don’t match this address: check it for a typo.'};return{value:s}}
@@ -507,6 +525,7 @@ function walletCheck(chain,raw){const a=String(raw||'').trim();if(!a)return{valu
    const v=r.data[0],prog=bits85(r.data.slice(1));if(!prog||v>16||prog.length<2||prog.length>40||(v===0&&prog.length!==20&&prog.length!==32)||(v===0)===r.m)return{bad:'That isn’t a valid Bitcoin address: check it for a typo.'};return{value:a.toLowerCase()}}
   const b=b58(a);if(!b||b.length!==25||(b[0]!==0&&b[0]!==5))return{bad:'That isn’t a valid Bitcoin address: check it for a typo.'};
   const h=sha256(sha256(b.slice(0,21)));if(h.slice(0,4).some((x,i)=>x!==b[21+i]))return{bad:'That isn’t a valid Bitcoin address: check it for a typo.'};return{value:a}}
+ if(chain==='NOCK'){if(!nockOk(a))return{bad:'That isn’t a Nockchain address: check it for a typo.'};return{value:a}}
  if(chain==='SOL'){const b=b58(a);if(!b||b.length!==32||a.length<32||a.length>44)return{bad:'A Solana address is 32 to 44 letters and digits.'};return{value:a}}
  return{bad:'Choose the chain.'}}
 // social accounts: the handle, checked for each network; a pasted profile link works too
@@ -516,12 +535,13 @@ const NETS={
  FARCASTER:{rx:/^@?([A-Za-z0-9][A-Za-z0-9-]{0,15}(?:\.eth)?)$/,at:true,low:true,url:h=>'https://farcaster.xyz/'+h,host:['farcaster.xyz','warpcast.com'],ph:'@name'},
  GITHUB:{rx:/^@?([A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38})$/,url:h=>'https://github.com/'+h,host:['github.com'],ph:'username'},
  INSTAGRAM:{rx:/^@?([A-Za-z0-9._]{1,30})$/,at:true,url:h=>'https://www.instagram.com/'+h,host:['instagram.com'],ph:'@handle'},
+ YOUTUBE:{rx:/^@?([A-Za-z0-9._-]{3,30})$/,at:true,lead:'@',url:h=>'https://www.youtube.com/@'+h,host:['youtube.com','m.youtube.com'],ph:'@handle'},
  NOSTR:{npub:true,url:h=>'https://njump.me/'+h,host:['njump.me'],ph:'npub1…'},
  TELEGRAM:{rx:/^@?([A-Za-z][A-Za-z0-9_]{4,31})$/,at:true,url:h=>'https://t.me/'+h,host:['t.me'],ph:'@handle'},
  DISCORD:{rx:/^@?([a-z0-9_.]{2,32})$/,ph:'username'},
 };
 function socialCheck(net,raw){const N=NETS[net];let h=String(raw||'').trim();if(!h)return{value:''};if(!N)return{bad:'Choose the network.'};
- if(/^https?:\/\//i.test(h)&&N.host){try{const u=new URL(h),host=u.hostname.replace(/^www\./,'').toLowerCase();if(N.host.includes(host)){const p=u.pathname.split('/').filter(Boolean);h=(N.seg?p[p.indexOf(N.seg)+1]:p[0])||''}}catch(e){}}
+ if(/^https?:\/\//i.test(h)&&N.host){try{const u=new URL(h),host=u.hostname.replace(/^www\./,'').toLowerCase();if(N.host.includes(host)){const p=u.pathname.split('/').filter(Boolean);h=(N.seg?p[p.indexOf(N.seg)+1]:p[0])||'';if(N.lead&&!h.startsWith(N.lead))h=''}}catch(e){}}
  if(N.npub){const r=bech32(h);const d=r&&!r.m&&r.ok&&r.hrp==='npub'&&bits85(r.data);if(!d||d.length!==32)return{bad:'A Nostr key starts npub1: check it for a typo.'};const v=h.toLowerCase();return{value:v,handle:v,url:N.url(v)}}
  const m=N.rx.exec(h);if(!m)return{bad:'That isn’t a valid '+net+' handle.'};
  const core=N.low?m[1].toLowerCase():m[1],handle=(N.at?'@':'')+core;return{value:handle,handle,url:N.url?N.url(core):null}}
@@ -710,7 +730,7 @@ setInterval(()=>{if(S.ready&&UI.open&&!document.hidden&&!(Seen[UI.open]&&Seen[UI
 
 /* ---------- drafts ---------- */
 // the pictures, and the wallets and accounts, are kept apart from the standard lines
-const PICS=['photo','photo2','sig'],REPKEY=/^(wallet|social)-\d+$/;
+const PICS=['photo','photo2','sig'],REPKEY=/^(wallet|social|website)-\d+$/;
 function repOf(l,kind){const m=/^(\S+) (\S+)$/.exec(l.value||''),W=kind==='wallet',o={key:l.key,label:W?'WALLET':'SOCIAL',value:l.value,pub:l.pub,bad:null};
  const ok=m&&(W?CHAINS.some(c=>c[0]===m[1]):!!NETS[m[1]]);if(W){o.chain=ok?m[1]:'';o.addr=ok?m[2]:''}else{o.net=ok?m[1]:'';o.handle=ok?m[2]:''}if(!ok)o.legacy=l.value;return o}
 function fromLines(ls){const by={};for(const l of ls)by[l.key]=l;let split=false;
@@ -722,11 +742,14 @@ function fromLines(ls){const by={};for(const l of ls)by[l.key]=l;let split=false
   oldAddr:by.address?{value:by.address.value,pub:by.address.pub}:null,
   std:FIELDS.map(([k,lab])=>({key:k,label:lab,value:by[k]?by[k].value:'',pub:by[k]?by[k].pub:false})),
   wallets:ls.filter(l=>/^wallet-\d+$/.test(l.key)).map(l=>repOf(l,'wallet')),socials:ls.filter(l=>/^social-\d+$/.test(l.key)).map(l=>repOf(l,'social')),
+  // more websites after the first ('website'): 'website-2', 'website-3', …
+  sites:ls.filter(l=>/^website-\d+$/.test(l.key)).map(l=>({key:l.key,label:'WEBSITE',value:l.value,pub:l.pub})),
   custom:ls.filter(l=>!['photo','thumb','name','photo2','sig','address'].includes(l.key)&&!STD.has(l.key)&&!REPKEY.test(l.key)).map(l=>({...l}))}}
 function redraft(){D=fromLines(S.mine.lines);if(D.split){UI.dirty=true;note('Your full name is now a first and a last name. Check them, then save.')}
  // a photo saved before thumbnails: make one and save it quietly
  if(D.photo.value&&!D.photo.thumb&&!UI.dirty&&!UI.thumbing){UI.thumbing=true;thumbOf(D.photo.value).then(t=>{UI.thumbing=false;if(!t||UI.dirty||UI.pending||!D.photo.value||D.photo.thumb)return;D.photo.thumb=t;const ls=toLines(D);UI.pending=ls;UI.closeOnSave=false;act({save:{lines:ls}})})}}
 function toLines(d){const out=[];for(const l of d.std){const v=l.value.trim();if(v)out.push({key:l.key,label:l.label,value:v,pub:l.pub})}
+ for(const o of d.sites)if(o.value)out.push({key:o.key,label:'WEBSITE',value:o.value,pub:o.pub});
  if(d.oldAddr&&d.oldAddr.value.trim())out.push({key:'address',label:'ADDRESS',value:d.oldAddr.value,pub:d.oldAddr.pub});
  for(const o of[...d.wallets,...d.socials])if(o.value)out.push({key:o.key,label:o.label,value:o.value,pub:o.pub});
  for(const l of d.custom){const v=l.value.trim();if(v)out.push({key:l.key,label:(l.label.trim()||'OTHER').toUpperCase(),value:v,pub:l.pub})}
@@ -737,7 +760,7 @@ function toLines(d){const out=[];for(const l of d.std){const v=l.value.trim();if
 const shown=ls=>ls.filter(l=>l.key!=='thumb');
 function problem(ls){if(shown(ls).length>LIM.lines)return'An ID holds at most '+LIM.lines+' lines.';for(const l of ls){if(bytes(l.label)>LIM.label)return'The label "'+l.label.slice(0,20)+'…" is too long.';
   if(PICS.includes(l.key)){if(l.value.length>(l.key==='sig'?LIM.sig:LIM.photo))return'That picture is too big.'}else if(l.key!=='thumb'&&bytes(l.value)>LIM.value)return l.label+' is too long (at most '+LIM.value+' characters).'}return null}
-const allRows=()=>D?[...D.std,...D.wallets,...D.socials]:[];
+const allRows=()=>D?[...D.std,...D.sites,...D.wallets,...D.socials]:[];
 function edited(){UI.dirty=true;drawPreview();drawSaveBar()}
 function newKey(){const used=new Set(D.custom.map(l=>l.key));let i=1;while(used.has('x'+i))i++;return'x'+i}
 // close: back to the card once it is saved
@@ -771,11 +794,11 @@ function sig(who,cls,fg){const i=el('img','sig '+(cls||''));i.alt='';if(!SigOk[w
 // photo. Then short facts side by side, the address, contact details, wallets,
 // accounts and any other lines. Either photo opens full size.
 const SHORT=[['born','DOB'],['sex','SEX'],['height','HGT'],['weight','WGT'],['eyes','EYES'],['hair','HAIR'],['blood','BLOOD'],['donor','DONOR']];
-const ADDR=['address','street','street2','city','region','postal','country'],CONTACT=['phone','email','website','emergency'];
+const ADDR=['address','street','street2','city','region','postal','country'];
 const ONTOP=['photo','thumb','photo2','sig','first','middle','last','name','preferred'];
 function doc(ship,ls,mode,hidden,o){ls=shown(ls);o=o||{};
  const d=el('div','doc'),band=el('div','band');
- add(band,shipTag(ship,mode==='owner'),o.seg,hidden>0&&ship!==S.our&&tag('PARTIAL','part'),o.flip&&flipBtn('qr',o.flip));d.appendChild(band);
+ add(band,shipTag(ship,mode==='owner'),o.seg,hidden>0&&ship!==S.our&&tag('PARTIAL','part'),o.flip&&flipBtn('qr',o.flip,ship!==S.our));d.appendChild(band);
  const body=el('div','dbody');d.appendChild(body);
  const top=el('div','top'),p=lineOf(ls,'photo'),p2=lineOf(ls,'photo2'),ph=picBox('ph',p,mode);
  if(!ph.querySelector('img'))ph.appendChild(el('span',null,mode==='owner'?'NO PHOTO':'NO PHOTO SHOWN'));
@@ -798,7 +821,8 @@ function doc(ship,ls,mode,hidden,o){ls=shown(ls);o=o||{};
  const box=(xs,f,cls)=>{if(!xs.length)return;const g=el('div',cls||'grid');for(const l of xs)g.appendChild(f(l));body.appendChild(g)};
  box(take(SHORT.map(x=>x[0])).map(l=>({...l,label:SHORT.find(x=>x[0]===l.key)[1]})),l=>field(l,mode),'stats');
  box(take(ADDR),l=>field(l,mode,size(l,['address','street','street2'].includes(l.key))));
- box(take(CONTACT),l=>{if(l.key!=='website')return field(l,mode,size(l,l.key==='emergency'));const r=siteCheck(l.value);return linkField(l,mode,r.value?r.value.replace(/^https?:\/\//,''):l.value,r.value)});
+ const sites=ls.filter(l=>/^website-\d+$/.test(l.key));for(const l of sites)used.add(l.key);
+ box([...take(['phone','email','website']),...sites,...take(['emergency'])],l=>{if(!/^website(-\d+)?$/.test(l.key))return field(l,mode,size(l,l.key==='emergency'));const r=siteCheck(l.value);return linkField(l,mode,r.value?r.value.replace(/^https?:\/\//,''):l.value,r.value)});
  const ws=ls.filter(l=>/^wallet-\d+$/.test(l.key)),so=ls.filter(l=>/^social-\d+$/.test(l.key));for(const l of[...ws,...so])used.add(l.key);
  box(ws,l=>walletField(l,mode));box(so,l=>socialField(l,mode));
  box(ls.filter(l=>!used.has(l.key)),l=>field(l,mode,size(l,false)));
@@ -871,7 +895,7 @@ async function qrSvg(ship,text){const t=text||publicUrl(ship),m=qrMatrix(t,/^[0-
 function svgUrl(svg){return'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}
 function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 async function qrPng(svg,px){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=px;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(im,0,0,px,px);c.toBlob(b=>b?ok(b):no(Error('png')),'image/png')};im.onerror=()=>no(Error('svg'));im.src=svgUrl(svg)})}
-function fileBase(){return'id-'+S.our.replace(/^~/,'')}
+function fileBase(ship){return'id-'+(ship||S.our).replace(/^~/,'')}
 
 /* ---------- scanning a card ---------- */
 const Scan={on:false,stream:null,timer:null,det:null,cv:null};
@@ -893,7 +917,7 @@ function readCard(file){if(!file)return;const url=URL.createObjectURL(file);cons
  im.onerror=()=>{URL.revokeObjectURL(url);note('Could not read that picture.')};im.src=url}
 function scanned(c){if(c.code)redeem(c.who,c.code);else openId(c.who)}
 // check a live pass with the ship that made it
-function redeem(who,code){if(who===S.our){note('That is your own pass.');return}
+function redeem(who,code){if(who===S.our){note('That is your own pass.');return}UI.turned=null;
  if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';
  const P=UI.pass={who,code,at:Date.now(),show:null,data:null,why:null};
  if(!S.book[who])S.book[who]={who,added:Date.now(),asked:null,fresh:false};
@@ -905,7 +929,7 @@ function closePass(){const P=UI.pass;UI.pass=null;UI.open=null;if(UI.from){UI.ta
  draw();scrollTo(0,0)}
 
 /* ---------- actions ---------- */
-function openId(who){who=shipIn(who);if(!who){note('That is not a ship name (an @p, like ~sampel-palnet).');return}UI.pass=null;
+function openId(who){who=shipIn(who);if(!who){note('That is not a ship name (an @p, like ~sampel-palnet).');return}UI.pass=null;UI.turned=null;
  if(who===S.our){goMe();return}if(UI.tab!=='look')UI.from=UI.tab;else if(!UI.open)UI.from=null;UI.tab='look';UI.open=who;UI.look='';if(!S.book[who])S.book[who]={who,added:Date.now(),asked:null,fresh:false};else S.book[who].fresh=false;fetchId(who,'full');draw();scrollTo(0,0);act({look:{who}})}
 // MY ID opens on the public side of the card
 function goMe(){UI.tab='me';UI.open=null;UI.pass=null;if(UI.me==='view'){UI.preview='public';UI.flipped=false}draw();scrollTo(0,0)}
@@ -948,7 +972,7 @@ function mePanel(m){if(UI.me==='edit'){editPanel(m);return}
   clearTimeout(Flip.t);const away=UI.flipped?front:back;Flip.t=setTimeout(()=>away.classList.add('away'),600)};
  const o={flip,seg:cardSeg(false)};
  const front=UI.preview==='owner'?doc(S.our,ls,'owner',0,o):doc(S.our,pub,'public',ls.length-pub.length,o);front.classList.add('side','front');front.querySelector('.dbody').dataset.sk='front:'+UI.preview;
- const back=docBack(flip);back.classList.add('side');front.inert=UI.flipped;back.inert=!UI.flipped;(UI.flipped?front:back).classList.add('away');
+ const back=docBack(S.our,flip,cardSeg(true));back.classList.add('side');front.inert=UI.flipped;back.inert=!UI.flipped;(UI.flipped?front:back).classList.add('away');
  add(fin,front,back);fl.appendChild(fin);w.appendChild(fl);
  const ab=el('div','actbar');add(ab,btn('EDIT ID',editMe,'big'),btn('SHOW ID',()=>openShow('public'),'go big'));w.appendChild(ab)}
 // PUBLIC | PRIVATE, in the card's strip. The back of the card holds a hidden
@@ -956,18 +980,30 @@ function mePanel(m){if(UI.me==='edit'){editPanel(m);return}
 function cardSeg(gone){const seg=el('div','seg'+(gone?' gone':'')+(UI.preview==='owner'?' priv':''));if(gone)seg.setAttribute('aria-hidden','true');else seg.id='cardseg';
  for(const[k,n,h]of[['public','PUBLIC','What anyone who looks you up sees: only your public lines.'],['owner','PRIVATE','Your whole ID: what you, and the ships you accept, see.']]){const b=btn(n,()=>{UI.preview=k;draw()},UI.preview===k?'on':'');b.title=h;if(gone)b.tabIndex=-1;else b.dataset.k='cv:'+k;seg.appendChild(b)}
  return seg}
-// the back of the card: a QR code of your @p, to print on a card
-function docBack(flip){const d=el('div','doc back');const band=el('div','band');add(band,shipTag(S.our,false),cardSeg(true),flipBtn('card',flip));d.appendChild(band);
- const b=el('div','bk dbody'),inn=el('div','bkin'),im=el('img','qr');im.alt='QR code for '+S.our;b.dataset.sk='back';
- const svgP=UI.qr||(UI.qr=qrSvg(S.our));svgP.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{im.replaceWith(status('Could not draw the code.','bad'))});
- const r=el('div','row');r.style.justifyContent='center';
- add(r,btn('DOWNLOAD SVG',async()=>download(fileBase()+'-qr.svg',new Blob([await svgP],{type:'image/svg+xml'}))),btn('DOWNLOAD PNG',async()=>{try{download(fileBase()+'-qr.png',await qrPng(await svgP,1200))}catch(e){note('Could not make the PNG.')}}));
- const link=el('a','bksub','SCAN TO LOOK UP');link.href=publicUrl(S.our);link.target='_blank';link.rel='noopener noreferrer';link.title='Your public ID on the web: what a phone camera opens';
- add(inn,im,el('div','bkship pat',S.our),link,r);b.appendChild(inn);d.appendChild(b);return d}
+// the back of a card, yours or anyone's: its QR code (the link to its public ID),
+// to print on a card or pass on. spacer keeps the @p wrapping as on the front.
+const QRS={};
+function docBack(ship,flip,spacer){const own=ship===S.our,d=el('div','doc back');const band=el('div','band');add(band,shipTag(ship,false),spacer,flipBtn('card',flip));d.appendChild(band);
+ const b=el('div','bk dbody'),inn=el('div','bkin'),im=el('img','qr');im.alt='QR code for '+ship;b.dataset.sk='back';
+ const svgP=own?UI.qr||(UI.qr=qrSvg(ship)):QRS[ship]||(QRS[ship]=qrSvg(ship));svgP.then(svg=>{im.src=svgUrl(svg)}).catch(()=>{im.replaceWith(status('Could not draw the code.','bad'))});
+ // the same link as the QR, to paste anywhere, and the code itself, to print: one row
+ const r=el('div','row bkbtns');
+ add(r,btn('COPY LINK',()=>copyText(publicUrl(ship))),btn('DOWNLOAD SVG',async()=>download(fileBase(ship)+'-qr.svg',new Blob([await svgP],{type:'image/svg+xml'}))),btn('DOWNLOAD PNG',async()=>{try{download(fileBase(ship)+'-qr.png',await qrPng(await svgP,1200))}catch(e){note('Could not make the PNG.')}}));
+ const link=el('a','bksub','SCAN TO LOOK UP');link.href=publicUrl(ship);link.target='_blank';link.rel='noopener noreferrer';link.title=(own?'Your':'Their')+' public ID on the web: what a phone camera opens';
+ add(inn,im,el('div','bkship pat',ship),link,r);b.appendChild(inn);d.appendChild(b);return d}
+// someone else's card, that turns over to its back with the QR square in its strip.
+// It stays turned while you look at that ID.
+function turnCard(who,hidden,front0){const on=UI.turned===who,fl=el('div','flip'+(on?' on':'')),fin=el('div','fin');
+ const flip=()=>{const t=UI.turned!==who;UI.turned=t?who:null;fl.classList.toggle('on',t);front.inert=t;back.inert=!t;front.classList.remove('away');back.classList.remove('away');
+  clearTimeout(Flip.t);const away=t?front:back;Flip.t=setTimeout(()=>away.classList.add('away'),600)};
+ const front=front0({flip});front.classList.add('side','front');
+ const sp=hidden>0?tag('PARTIAL','part'):null;if(sp){sp.style.visibility='hidden';sp.setAttribute('aria-hidden','true')}
+ const back=docBack(who,flip,sp);back.classList.add('side');front.inert=on;back.inert=!on;(on?front:back).classList.add('away');
+ add(fin,front,back);fl.appendChild(fin);return fl}
 // the button that flips the card: a little QR code on the front, a card on the back
 const ICON={qr:'<svg viewBox="0 0 21 21" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2z"/><path d="M9 0h2v2H9zM9 3h2v3H9zM12 9h2v2h-2zM9 8h2v4H9zM15 9h2v2h-2zM19 8h2v3h-2zM9 14h2v2H9zM12 12h3v2h-3zM16 13h2v3h-2zM19 16h2v2h-2zM12 17h2v4h-2zM15 19h3v2h-3zM0 9h2v2H0zM4 8h3v2H4zM9 18h2v3H9z"/></svg>',
  card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="2" y="5" width="20" height="14"/><rect x="5" y="8.5" width="5" height="6.5"/><path d="M13 9.5h6M13 12.5h6M13 15.5h4"/></svg>'};
-function flipBtn(kind,f){const b=btn('',f,'flipbtn');b.innerHTML=ICON[kind];const t=kind==='qr'?'Flip the card: your look-up code':'Flip the card back';b.title=t;b.setAttribute('aria-label',t);b.dataset.k='flip:'+kind;return b}
+function flipBtn(kind,f,theirs){const b=btn('',f,'flipbtn');b.innerHTML=ICON[kind];const t=kind==='qr'?'Flip the card: '+(theirs?'their':'your')+' look-up code':'Flip the card back';b.title=t;b.setAttribute('aria-label',t);b.dataset.k='flip:'+kind;return b}
 function editMe(){UI.me='edit';UI.preview='owner';UI.edPreview=false;UI.confirm=null;draw();scrollTo(0,0)}
 function leaveEdit(later){UI.me='view';UI.preview='public';UI.flipped=false;UI.confirm=null;UI.edPreview=false;if(later){UI.top=true;return}draw();scrollTo(0,0)}
 function editPanel(m){
@@ -1046,6 +1082,10 @@ function repSec(kind){const W=kind==='wallet',s=sec(W?'WALLETS':'SOCIAL ACCOUNTS
  const r=el('div','row');if(xs.length)r.style.marginTop='10px';
  r.appendChild(btn(W?'+ ADD WALLET':'+ ADD ACCOUNT',()=>{if(full())return;const o={key:repKey(kind),label:W?'WALLET':'SOCIAL',value:'',pub:false,chain:'',addr:'',net:'',handle:''};xs.push(o);drawEditor();const x=document.querySelector('[data-k="k:'+o.key+'"]');if(x)x.focus()}));
  s.appendChild(r);return s}
+// more websites, under the first: each its own line, checked and linked like it
+function siteKey(){const used=new Set(D.sites.map(o=>o.key));let i=2;while(used.has('website-'+i))i++;return'website-'+i}
+function siteRows(ls){for(const o of D.sites){const r=el('div','ed');add(r,el('div','lab','WEBSITE'),widget(o,'url'),visBtn(o),btn('✕',()=>{D.sites=D.sites.filter(x=>x!==o);edited();drawEditor()},'x red'));ls.appendChild(r)}
+ const r=el('div','row addsite');r.appendChild(btn('+ ADD WEBSITE',()=>{if(full())return;const o={key:siteKey(),label:'WEBSITE',value:'',pub:false};D.sites.push(o);drawEditor();const x=document.querySelector('[data-k="v:'+o.key+'"]');if(x)x.focus()}));ls.appendChild(r)}
 function full(){if(shown(toLines(D)).length>=LIM.lines){note('That is as many lines as an ID holds.');return true}return false}
 // a photo slot: the photo, or the second photo
 function picEd(k,cap){const P=D[k],pe=el('div','phed'),box=el('div','ph');if(P.value&&IMG.test(P.value)){const i=el('img');i.alt='';i.src=P.value;box.appendChild(i)}else box.textContent='NONE';
@@ -1088,7 +1128,7 @@ function sigSvg(st){const pts=st.flat();if(pts.length<2)return null;let x0=1e9,y
  return isSig(u)?u:null}
 function oldAddrRow(){const o=D.oldAddr,r=el('div','ed'),box=el('div','fld');add(box,el('div','quote',o.value),el('div','old','Your address from before. Fill in the lines below, then remove it.'));
  add(r,el('div','lab','OLD ADDRESS'),box,visBtn(o),btn('✕',()=>{D.oldAddr=null;edited();drawEditor()},'x red'));return r}
-function setAll(pub){for(const l of[...D.std,...D.custom,...D.wallets,...D.socials])l.pub=pub;for(const k of PICS)D[k].pub=pub;if(D.oldAddr)D.oldAddr.pub=pub;edited();drawEditor()}
+function setAll(pub){for(const l of[...D.std,...D.sites,...D.custom,...D.wallets,...D.socials])l.pub=pub;for(const k of PICS)D[k].pub=pub;if(D.oldAddr)D.oldAddr.pub=pub;edited();drawEditor()}
 function widget(o,kind,x){let inner;
  if(FORM[kind])inner=boxesFor(o,kind);else if(kind==='sex')inner=sexFor(o);else if(kind==='pick')inner=pickFor(o,x);else if(kind==='phone')inner=phoneFor(o);else if(kind==='email')inner=emailFor(o);else if(kind==='yesno')inner=yesnoFor(o);else if(kind==='url')inner=urlFor(o);else if(kind==='postal')inner=postalFor(o);
  else inner=inputFor(o,'v:'+o.key,x,kind==='multi');
@@ -1098,7 +1138,7 @@ function drawEditor(){const R=$('edcol');if(!R)return;const keep=focusKey();R.te
  R.appendChild(sigEd());
  const ls=sec('YOUR LINES',btn('ALL PRIVATE',()=>setAll(false),'x'),btn('ALL PUBLIC',()=>setAll(true),'x'));
  for(const[k,lab,kind,x]of FIELDS){if(GROUP[k])ls.appendChild(el('div','edgrp',GROUP[k]));if(k==='street'&&D.oldAddr)ls.appendChild(oldAddrRow());
-  const o=D.std.find(l=>l.key===k);const r=el('div','ed');add(r,el('div','lab',lab),widget(o,kind,x),visBtn(o),el('span'));ls.appendChild(r)}
+  const o=D.std.find(l=>l.key===k);const r=el('div','ed');add(r,el('div','lab',lab),widget(o,kind,x),visBtn(o),el('span'));ls.appendChild(r);if(k==='website')siteRows(ls)}
  ls.appendChild(el('div','edgrp','OTHER'));
  for(const o of D.custom){const r=el('div','ed');const lab=el('div','lab');const li=el('input');li.type='text';li.value=o.label;li.placeholder='LABEL';li.maxLength=LIM.label;li.dataset.k='l:'+o.key;li.oninput=()=>{o.label=li.value;edited()};lab.appendChild(li);
   add(r,lab,inputFor(o,'v:'+o.key,'',false),visBtn(o),btn('✕',()=>{D.custom=D.custom.filter(x=>x!==o);edited();drawEditor()},'x red'));ls.appendChild(r)}
@@ -1142,7 +1182,7 @@ function theirPanel(m0,who){if(UI.pass&&UI.pass.who===who){passPanel(m0,who);ret
  if(UI.gate&&UI.gate.who===who){m.removeChild(cols);m.appendChild(loader('SEARCHING FOR '+who));return}
  // the ID as fetched, with the photo (or its thumbnail while the photo comes)
  const ls=v.lines.slice(),h=v.pic&&v.pic.hash,im=h&&Img[h];if(v.pic){const src=im&&(im.full||im.thumb);if(src)ls.unshift({key:'photo',label:'PHOTO',value:src,pub:v.pic.pub})}
- L.appendChild(doc(who,withMore(who,ls),'viewer',v.hidden));
+ L.appendChild(turnCard(who,v.hidden,o=>doc(who,withMore(who,ls),'viewer',v.hidden,o)));
  if(f.off){L.appendChild(status('Their ship isn’t answering right now. This is what it showed you '+ago(v.at).toLowerCase()+'.','warn'));const r=el('div','row');r.style.marginTop='6px';r.appendChild(again());L.appendChild(r)}
  R.appendChild(privBox(who,v))}
 // What you may see of their private details, and the exchange: you never see
@@ -1178,7 +1218,7 @@ function passPanel(m0,who){const P=UI.pass,v=P.data,h=v&&v.pic&&v.pic.hash,m=el(
  const L=m;
  const seal=el('div','seal');add(seal,el('div','st','✓ VERIFIED · '+(P.show==='private'?'PRIVATE PASS':'PUBLIC PASS')+' · '+clock(v.at)));L.appendChild(seal);
  const ls=v.lines.slice();if(v.pic){const im=Img[h],src=im&&(im.full||im.thumb);if(src)ls.unshift({key:'photo',label:'PHOTO',value:src,pub:v.pic.pub})}
- L.appendChild(doc(who,withMore(who,ls),'viewer',v.hidden));L.appendChild(privBox(who,v,true))}
+ L.appendChild(turnCard(who,v.hidden,o=>doc(who,withMore(who,ls),'viewer',v.hidden,o)));L.appendChild(privBox(who,v,true))}
 $('cardin').onchange=e=>{const f=e.target.files[0];e.target.value='';readCard(f)};
 $('scanx').onclick=stopScan;
 addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('lightbox'))closePic();else if(Scan.on)stopScan();else if(UI.show)closeShow();else if(UI.menu)closeMenu()});
@@ -1246,7 +1286,7 @@ addEventListener('pagehide',()=>{if(!UI.show||!Chan.url||!Chan.ship)return;
  try{fetch(Chan.url,{method:'PUT',keepalive:true,credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify([{id:++Chan.id,action:'poke',ship:Chan.ship,app:'id',mark:'id-action',json:{hide:null}}])})}catch(e){}});
 
 /* the menu, behind the icon: who you are, and how ID works */
-const VERSION="0.5.0";// written in by build.mjs from desk.docket-0
+const VERSION="0.5.1";// written in by build.mjs from desk.docket-0
 const HOW=[
  ['YOUR ID',[
   'Your ID is kept on your ship and nowhere else.',
